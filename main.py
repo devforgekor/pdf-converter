@@ -13,6 +13,8 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from sqlalchemy.orm import Session
 from passlib.context import CryptContext
 from dotenv import load_dotenv
+from authlib.integrations.starlette_client import OAuth
+import httpx
 
 from database import engine, get_db, Base
 from models import User, Conversion
@@ -25,6 +27,16 @@ load_dotenv()
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="PDF to Spreadsheet")
+
+# Google OAuth 설정
+oauth = OAuth()
+oauth.register(
+    name='google',
+    client_id=os.getenv('GOOGLE_CLIENT_ID'),
+    client_secret=os.getenv('GOOGLE_CLIENT_SECRET'),
+    server_metadata_url='https://accounts.google.com/.well-known/openid-configuration',
+    client_kwargs={'scope': 'openid email profile'},
+)
 
 
 # CSRF 미들웨어
@@ -119,6 +131,48 @@ def get_optional_user(request: Request, db: Session = Depends(get_db)):
 @app.get("/login", response_class=HTMLResponse)
 async def login_page(request: Request):
     return templates.TemplateResponse("login.html", {"request": request})
+
+
+@app.get("/auth/google")
+async def google_login(request: Request):
+    redirect_uri = request.url_for('google_callback')
+    return await oauth.google.authorize_redirect(request, redirect_uri)
+
+
+@app.get("/auth/google/callback")
+async def google_callback(request: Request, db: Session = Depends(get_db)):
+    token = await oauth.google.authorize_access_token(request)
+    user_info = token.get('userinfo')
+    
+    if not user_info:
+        flash(request, "Google 인증에 실패했습니다.", "danger")
+        return RedirectResponse("/login", status_code=303)
+    
+    email = user_info.get('email', '')
+    
+    # 도메인 제한 (@kuhwa.sen.sc.kr만 허용)
+    if not email.endswith("@kuhwa.sen.sc.kr"):
+        flash(request, "@kuhwa.sen.sc.kr 이메일만 사용 가능합니다.", "danger")
+        return RedirectResponse("/login", status_code=303)
+    
+    # 사용자 조회 또는 생성
+    user = db.query(User).filter(User.email == email).first()
+    if not user:
+        # 새 사용자 생성
+        user = User(
+            username=email.split('@')[0],
+            email=email,
+            hashed_password=pwd_context.hash(uuid.uuid4().hex),  # 랜덤 비밀번호
+            is_active=True,
+        )
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+    
+    # 세션에 사용자 정보 저장
+    request.session["user_id"] = user.id
+    flash(request, f"환영합니다, {user.username}님!", "success")
+    return RedirectResponse("/", status_code=303)
 
 
 @app.post("/login")
