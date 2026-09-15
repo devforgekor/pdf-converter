@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% block title %}회원가입 - PDF2Sheet{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+    <div class="auth-card">
+        <h1 class="auth-title">회원가입</h1>
+        
+        <form action="/register" method="post" class="auth-form">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token(request) }}">
+            
+            <div class="form-group">
+                <label for="username">사용자명</label>
+                <input type="text" id="username" name="username" required minlength="3" maxlength="50">
+            </div>
+            
+            <div class="form-group">
+                <label for="email">이메일</label>
+                <input type="email" id="email" name="email" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="password">비밀번호</label>
+                <input type="password" id="password" name="password" required minlength="8">
+                <small>최소 8자 이상</small>
+            </div>
+            
+            <button type="submit" class="btn btn-primary btn-block">회원가입</button>
+        </form>
+        
+        <div class="auth-footer">
+            <p>이미 계정이 있으신가요? <a href="/login">로그인</a></p>
+        </div>
+    </div>
+</div>
+{% endblock %}

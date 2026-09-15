@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+
+{% block title %}다운로드 - PDF2Sheet{% endblock %}
+
+{% block content %}
+<div class="download-container">
+    <div class="download-card">
+        {% if conversion.status == 'completed' %}
+            <div class="success-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                    <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                </svg>
+            </div>
+            <h1 class="download-title">변환 완료!</h1>
+            <p class="download-subtitle">파일이 성공적으로 변환되었습니다</p>
+            
+            <div class="file-preview">
+                <div class="file-details">
+                    <p class="file-name">{{ conversion.original_filename }}</p>
+                    <p class="file-info">PDF → Excel (.xlsx)</p>
+                    <p class="file-info">유형: {{ conversion.pdf_type or '자동 감지' }}</p>
+                </div>
+            </div>
+            
+            <div class="download-actions">
+                <a href="/download/{{ conversion.id }}/file" class="btn btn-primary btn-large">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="7 10 12 15 17 10"></polyline>
+                        <line x1="12" y1="15" x2="12" y2="3"></line>
+                    </svg>
+                    Excel 파일 다운로드
+                </a>
+                <a href="/" class="btn btn-outline">새 파일 업로드</a>
+            </div>
+            
+        {% elif conversion.status == 'failed' %}
+            <div class="error-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="15" y1="9" x2="9" y2="15"></line>
+                    <line x1="9" y1="9" x2="15" y2="15"></line>
+                </svg>
+            </div>
+            <h1 class="download-title">변환 실패</h1>
+            <p class="download-subtitle">{{ conversion.error_message }}</p>
+            
+            <div class="download-actions">
+                <a href="/convert/{{ conversion.id }}" class="btn btn-primary">다시 시도</a>
+                <a href="/" class="btn btn-outline">새 파일 업로드</a>
+            </div>
+            
+        {% else %}
+            <div class="loading-icon">
+                <div class="spinner"></div>
+            </div>
+            <h1 class="download-title">변환 중...</h1>
+            <p class="download-subtitle">잠시만 기다려주세요</p>
+            <div class="progress-bar">
+                <div class="progress-fill"></div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{% if conversion.status == 'processing' %}
+<script>
+    // 3초마다 상태 확인
+    const conversionId = {{ conversion.id }};
+    let checkCount = 0;
+    const maxChecks = 60; // 최대 3분 (3초 * 60)
+    
+    async function checkStatus() {
+        try {
+            const response = await fetch('/api/status/' + conversionId);
+            const data = await response.json();
+            
+            if (data.status === 'completed') {
+                window.location.reload();
+            } else if (data.status === 'failed') {
+                window.location.reload();
+            } else if (checkCount >= maxChecks) {
+                // 타임아웃: 3분 초과
+                alert('변환 시간이 너무 오래 걸립니다. 페이지를 새로고침해주세요.');
+            }
+            
+            checkCount++;
+        } catch (error) {
+            console.error('상태 확인 실패:', error);
+        }
+    }
+    
+    // 3초마다 상태 확인
+    setInterval(checkStatus, 3000);
+</script>
+{% endif %}
+{% endblock %}

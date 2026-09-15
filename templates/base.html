@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}PDF to Spreadsheet{% endblock %}</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-brand">
+            <a href="/">PDF2Sheet</a>
+        </div>
+        <div class="nav-menu">
+            {% if user %}
+                <a href="/" class="nav-link">업로드</a>
+                <a href="/history" class="nav-link">이력</a>
+                <span class="nav-user">{{ user.username }}</span>
+                <form action="/logout" method="post" class="nav-form">
+                    <button type="submit" class="btn btn-outline">로그아웃</button>
+                </form>
+            {% else %}
+                <a href="/login" class="nav-link">로그인</a>
+                <a href="/register" class="nav-link">회원가입</a>
+            {% endif %}
+        </div>
+    </nav>
+
+    <main class="container">
+        {% set messages = get_flashed_messages(request) %}
+        {% if messages %}
+            {% for msg in messages %}
+                <div class="alert alert-{{ msg.category }}">{{ msg.message }}</div>
+            {% endfor %}
+        {% endif %}
+
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="footer">
+        <p>&copy; 2024 PDF2Sheet. All rights reserved.</p>
+    </footer>
+
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

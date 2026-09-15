@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+
+{% block title %}변환 이력 - PDF2Sheet{% endblock %}
+
+{% block content %}
+<div class="history-container">
+    <div class="history-header">
+        <h1 class="history-title">변환 이력</h1>
+        <a href="/" class="btn btn-primary">새 파일 업로드</a>
+    </div>
+    
+    {% if conversions %}
+    <div class="history-table-wrapper">
+        <table class="history-table">
+            <thead>
+                <tr>
+                    <th>파일명</th>
+                    <th>유형</th>
+                    <th>출력 형식</th>
+                    <th>상태</th>
+                    <th>생성일</th>
+                    <th>작업</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for conv in conversions %}
+                <tr>
+                    <td class="filename">{{ conv.original_filename }}</td>
+                    <td>{{ conv.pdf_type or '자동 감지' }}</td>
+                    <td>{{ 'Excel' if conv.output_format == 'excel' else 'Google 시트' }}</td>
+                    <td>
+                        {% if conv.status == 'completed' %}
+                            <span class="status-badge success">완료</span>
+                        {% elif conv.status == 'processing' %}
+                            <span class="status-badge warning">변환 중</span>
+                        {% elif conv.status == 'failed' %}
+                            <span class="status-badge danger">실패</span>
+                        {% else %}
+                            <span class="status-badge">대기</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ conv.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                    <td class="actions">
+                        {% if conv.status == 'completed' %}
+                            <a href="/download/{{ conv.id }}/file" class="btn btn-small">다운로드</a>
+                        {% elif conv.status == 'failed' %}
+                            <a href="/convert/{{ conv.id }}" class="btn btn-small">재시도</a>
+                        {% endif %}
+                        <button class="btn btn-small btn-danger delete-btn" data-id="{{ conv.id }}">삭제</button>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+        </svg>
+        <h2>변환 이력이 없습니다</h2>
+        <p>첫 번째 PDF 파일을 업로드해보세요!</p>
+        <a href="/" class="btn btn-primary">파일 업로드</a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // CSRF 토큰을 세션 스토리지에서 가져오기
+    function getCsrfToken() {
+        // 템플릿에서 전달된 CSRF 토큰 사용
+        const tokenElement = document.querySelector('input[name="csrf_token"]');
+        if (tokenElement) {
+            return tokenElement.value;
+        }
+        
+        // 쿠키에서 가져오기 (대체 방법)
+        const match = document.cookie.match(/csrftoken=([^;]+)/);
+        return match ? match[1] : '';
+    }
+    
+    // 삭제 버튼 처리
+    document.querySelectorAll('.delete-btn').forEach(btn => {
+        btn.addEventListener('click', async function() {
+            const id = this.dataset.id;
+            if (confirm('정말 삭제하시겠습니까?')) {
+                try {
+                    const response = await fetch(`/api/file/${id}`, {
+                        method: 'DELETE',
+                        headers: {
+                            'X-CSRF-Token': getCsrfToken()
+                        }
+                    });
+                    
+                    if (response.ok) {
+                        window.location.reload();
+                    } else {
+                        alert('삭제 중 오류가 발생했습니다.');
+                    }
+                } catch (error) {
+                    alert('삭제 중 오류가 발생했습니다.');
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}

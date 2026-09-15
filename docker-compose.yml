@@ -1,0 +1,15 @@
+version: '3.8'
+
+services:
+  pdf2sheet:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./uploads:/app/uploads
+      - ./output:/app/output
+      - ./instance:/app/instance
+    environment:
+      - SECRET_KEY=${SECRET_KEY:-your-secret-key-change-in-production}
+      - DATABASE_URL=sqlite:///./instance/app.db
+    restart: unless-stopped

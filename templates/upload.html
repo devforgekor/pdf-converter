@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+
+{% block title %}업로드 - PDF2Sheet{% endblock %}
+
+{% block content %}
+<div class="upload-container">
+    <div class="upload-card">
+        <h1 class="upload-title">PDF 파일 업로드</h1>
+        <p class="upload-subtitle">PDF 파일을 드래그하거나 클릭하여 업로드하세요</p>
+        
+        <form action="/upload" method="post" enctype="multipart/form-data" id="upload-form">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token(request) }}">
+            
+            <div class="upload-zone" id="upload-zone">
+                <div class="upload-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="17 8 12 3 7 8"></polyline>
+                        <line x1="12" y1="3" x2="12" y2="15"></line>
+                    </svg>
+                </div>
+                <p class="upload-text">파일을 여기에 드래그하세요</p>
+                <p class="upload-hint">또는 클릭하여 파일 선택</p>
+                <input type="file" name="file" id="file-input" accept=".pdf" hidden required>
+            </div>
+            
+            <div class="file-info" id="file-info" style="display: none;">
+                <span class="file-name" id="file-name"></span>
+                <span class="file-size" id="file-size"></span>
+                <button type="button" class="btn btn-small btn-danger" id="remove-file">제거</button>
+            </div>
+            
+            <button type="submit" class="btn btn-primary btn-block" id="upload-btn" disabled>
+                업로드 및 변환 설정
+            </button>
+        </form>
+    </div>
+    
+    {% if recent_conversions %}
+    <div class="recent-card">
+        <h2>최근 변환 이력</h2>
+        <div class="recent-list">
+            {% for conv in recent_conversions %}
+            <div class="recent-item">
+                <div class="recent-info">
+                    <span class="recent-filename">{{ conv.original_filename }}</span>
+                    <span class="recent-date">{{ conv.created_at.strftime('%Y-%m-%d %H:%M') }}</span>
+                </div>
+                <div class="recent-status">
+                    {% if conv.status == 'completed' %}
+                        <span class="status-badge success">완료</span>
+                        <a href="/download/{{ conv.id }}" class="btn btn-small">다운로드</a>
+                    {% elif conv.status == 'processing' %}
+                        <span class="status-badge warning">변환 중</span>
+                    {% elif conv.status == 'failed' %}
+                        <span class="status-badge danger">실패</span>
+                    {% else %}
+                        <span class="status-badge">대기</span>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="/static/js/upload.js"></script>
+{% endblock %}
