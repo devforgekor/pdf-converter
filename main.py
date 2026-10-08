@@ -409,17 +409,12 @@ async def google_callback(request: Request, db: Session = Depends(get_db)):
     return RedirectResponse("/", status_code=303)
 
 
-# === 메인 페이지 (대시보드) ===
+# === 앱 루트 — 이수증으로 안내 (구 대시보드/홈페이지는 삭제) ===
 @app.get("/", response_class=HTMLResponse)
-async def index(request: Request, db: Session = Depends(get_db)):
+async def index(request: Request):
     if not request.session.get("pin_authenticated"):
         return RedirectResponse("/login", status_code=303)
-    google_user = get_google_user(request, db)
-    return templates.TemplateResponse("dashboard.html", {
-        "request": request,
-        "user": google_user,
-        "recent_conversions": [],
-    })
+    return RedirectResponse("/certificate", status_code=303)
 
 
 # === 이수증 ===
@@ -998,7 +993,7 @@ async def _upload_single_file(request: Request, file: UploadFile, db: Session):
     """단일 파일 업로드 처리"""
     if not file.filename.lower().endswith(".pdf"):
         flash(request, "PDF 파일만 업로드 가능합니다.", "danger")
-        return RedirectResponse("/", status_code=303)
+        return RedirectResponse("/upload", status_code=303)
 
     content = await file.read()
 
@@ -1009,7 +1004,7 @@ async def _upload_single_file(request: Request, file: UploadFile, db: Session):
             f.write(content)
     except Exception as e:
         flash(request, f"파일 저장 중 오류가 발생했습니다: {str(e)}", "danger")
-        return RedirectResponse("/", status_code=303)
+        return RedirectResponse("/upload", status_code=303)
 
     # 기본 검증 (매직 넘버, 파일 크기)
     try:
@@ -1019,7 +1014,7 @@ async def _upload_single_file(request: Request, file: UploadFile, db: Session):
         if os.path.exists(temp_path):
             os.remove(temp_path)
         flash(request, f"PDF 검증 실패: {str(e)}", "danger")
-        return RedirectResponse("/", status_code=303)
+        return RedirectResponse("/upload", status_code=303)
 
     # 암호화 검사
     if validator.is_encrypted(temp_path):
@@ -1037,7 +1032,7 @@ async def _upload_single_file(request: Request, file: UploadFile, db: Session):
         if os.path.exists(temp_path):
             os.remove(temp_path)
         flash(request, f"PDF 검증 실패: {str(e)}", "danger")
-        return RedirectResponse("/", status_code=303)
+        return RedirectResponse("/upload", status_code=303)
 
     if os.path.exists(temp_path):
         os.remove(temp_path)
@@ -1049,7 +1044,7 @@ async def _upload_single_file(request: Request, file: UploadFile, db: Session):
         storage.upload_file(object_name, content, "application/pdf")
     except Exception as e:
         flash(request, f"파일 업로드 중 오류가 발생했습니다: {str(e)}", "danger")
-        return RedirectResponse("/", status_code=303)
+        return RedirectResponse("/upload", status_code=303)
 
     conversion = Conversion(
         user_id=0,
@@ -1143,7 +1138,7 @@ async def _upload_batch_files(request: Request, files: List[UploadFile], db: Ses
     if errors:
         flash(request, f"업로드 실패: {'; '.join(errors)}", "danger")
     
-    return RedirectResponse("/", status_code=303)
+    return RedirectResponse("/upload", status_code=303)
 
 
 @app.post("/upload-with-password")
@@ -1160,7 +1155,7 @@ async def upload_with_password(
 
     if not temp_path or not os.path.exists(temp_path):
         flash(request, "업로드된 파일을 찾을 수 없습니다. 다시 업로드해주세요.", "danger")
-        return RedirectResponse("/", status_code=303)
+        return RedirectResponse("/upload", status_code=303)
 
     # 복호화 시도
     decrypted_path = f"/tmp/decrypted_{uuid.uuid4().hex}.pdf"
@@ -1182,14 +1177,14 @@ async def upload_with_password(
         if os.path.exists(decrypted_path):
             os.remove(decrypted_path)
         flash(request, f"PDF 검증 실패: {str(e)}", "danger")
-        return RedirectResponse("/", status_code=303)
+        return RedirectResponse("/upload", status_code=303)
     except Exception as e:
         if os.path.exists(temp_path):
             os.remove(temp_path)
         if os.path.exists(decrypted_path):
             os.remove(decrypted_path)
         flash(request, f"처리 중 오류가 발생했습니다: {str(e)}", "danger")
-        return RedirectResponse("/", status_code=303)
+        return RedirectResponse("/upload", status_code=303)
 
     # 세션 정리
     request.session.pop("pending_pdf_temp", None)
@@ -1211,7 +1206,7 @@ async def upload_with_password(
         if os.path.exists(decrypted_path):
             os.remove(decrypted_path)
         flash(request, f"파일 업로드 중 오류가 발생했습니다: {str(e)}", "danger")
-        return RedirectResponse("/", status_code=303)
+        return RedirectResponse("/upload", status_code=303)
 
     if os.path.exists(decrypted_path):
         os.remove(decrypted_path)
@@ -1240,7 +1235,7 @@ async def convert_page(request: Request, conversion_id: int, db: Session = Depen
     conversion = db.query(Conversion).filter(Conversion.id == conversion_id).first()
     if not conversion:
         flash(request, "변환 레코드를 찾을 수 없습니다.", "danger")
-        return RedirectResponse("/", status_code=303)
+        return RedirectResponse("/upload", status_code=303)
     return templates.TemplateResponse("convert.html", {
         "request": request,
         "conversion": conversion,
@@ -1261,7 +1256,7 @@ async def start_conversion(
     conversion = db.query(Conversion).filter(Conversion.id == conversion_id).first()
     if not conversion:
         flash(request, "변환 레코드를 찾을 수 없습니다.", "danger")
-        return RedirectResponse("/", status_code=303)
+        return RedirectResponse("/upload", status_code=303)
 
     conversion.output_format = output_format
     conversion.pdf_type = pdf_type
@@ -1335,7 +1330,7 @@ async def download_page(request: Request, conversion_id: int, db: Session = Depe
     conversion = db.query(Conversion).filter(Conversion.id == conversion_id).first()
     if not conversion:
         flash(request, "변환 레코드를 찾을 수 없습니다.", "danger")
-        return RedirectResponse("/", status_code=303)
+        return RedirectResponse("/upload", status_code=303)
     return templates.TemplateResponse("download.html", {
         "request": request,
         "conversion": conversion,
@@ -1663,7 +1658,7 @@ async def sync_to_sheets(
     conversion = db.query(Conversion).filter(Conversion.id == conversion_id).first()
     if not conversion or conversion.status != "completed":
         flash(request, "변환된 파일을 찾을 수 없습니다.", "danger")
-        return RedirectResponse("/", status_code=303)
+        return RedirectResponse("/upload", status_code=303)
     
     try:
         # Excel 파일에서 데이터 추출

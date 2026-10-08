@@ -30,7 +30,7 @@
             
             <div class="download-actions">
                 <a href="/batch" class="btn btn-primary">새 배치 시작</a>
-                <a href="/" class="btn btn-outline">단일 파일 업로드</a>
+                <a href="/upload" class="btn btn-outline">단일 파일 업로드</a>
             </div>
             
         {% elif job.status == 'failed' %}
@@ -46,7 +46,7 @@
             
             <div class="download-actions">
                 <a href="/batch" class="btn btn-primary">다시 시도</a>
-                <a href="/" class="btn btn-outline">단일 파일 업로드</a>
+                <a href="/upload" class="btn btn-outline">단일 파일 업로드</a>
             </div>
             
         {% else %}
