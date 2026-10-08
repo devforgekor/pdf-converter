@@ -41,8 +41,6 @@ from sheets_integration import google_sheets_manager
 
 load_dotenv()
 
-APP_PIN = os.getenv("APP_PIN", "0873")
-
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="PDF to Spreadsheet")
@@ -90,11 +88,6 @@ os.makedirs(UPLOAD_DIR, exist_ok=True)
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 
-def check_pin(request: Request):
-    if not request.session.get("pin_authenticated"):
-        raise HTTPException(status_code=303, headers={"Location": "/login"})
-
-
 def get_google_user(request: Request, db: Session):
     user_id = request.session.get("user_id")
     if user_id:
@@ -102,35 +95,15 @@ def get_google_user(request: Request, db: Session):
     return None
 
 
-# === PIN 인증 ===
-@app.get("/login", response_class=HTMLResponse)
-async def login_page(request: Request):
-    if request.session.get("pin_authenticated"):
-        return RedirectResponse("/", status_code=303)
-    return templates.TemplateResponse("login.html", {"request": request})
-
-
-@app.post("/login")
-async def login(request: Request, pin: str = Form(...)):
-    if pin != APP_PIN:
-        flash(request, "PIN이 올바르지 않습니다.", "danger")
-        return RedirectResponse("/login", status_code=303)
-    request.session["pin_authenticated"] = True
-    flash(request, "인증되었습니다.", "success")
-    return RedirectResponse("/", status_code=303)
-
-
 @app.post("/logout")
 async def logout(request: Request):
     request.session.clear()
-    return RedirectResponse("/login", status_code=303)
+    return RedirectResponse("/", status_code=303)
 
 
 # === 관리자 페이지 ===
 @app.get("/admin", response_class=HTMLResponse)
 async def admin_page(request: Request, db: Session = Depends(get_db)):
-    if not request.session.get("pin_authenticated"):
-        return RedirectResponse("/login", status_code=303)
     
     # 통계 데이터
     stats = {
@@ -164,8 +137,6 @@ async def add_user(
     password: str = Form(...),
     db: Session = Depends(get_db),
 ):
-    if not request.session.get("pin_authenticated"):
-        return RedirectResponse("/login", status_code=303)
     
     # 중복 확인
     existing = db.query(User).filter(
@@ -194,8 +165,6 @@ async def delete_user(
     user_id: int,
     db: Session = Depends(get_db),
 ):
-    if not request.session.get("pin_authenticated"):
-        return RedirectResponse("/login", status_code=303)
     
     user = db.query(User).filter(User.id == user_id).first()
     if user:
@@ -211,8 +180,6 @@ async def delete_conversion(
     conversion_id: int,
     db: Session = Depends(get_db),
 ):
-    if not request.session.get("pin_authenticated"):
-        return RedirectResponse("/login", status_code=303)
     
     conversion = db.query(Conversion).filter(Conversion.id == conversion_id).first()
     if conversion:
@@ -239,8 +206,6 @@ async def upload_example_file(
     description: str = Form(""),
     db: Session = Depends(get_db),
 ):
-    if not request.session.get("pin_authenticated"):
-        return RedirectResponse("/login", status_code=303)
 
     # 파일 유형 결정
     filename_lower = file.filename.lower()
@@ -287,8 +252,6 @@ async def download_example_file_public(
     file_id: int,
     db: Session = Depends(get_db),
 ):
-    if not request.session.get("pin_authenticated"):
-        return RedirectResponse("/login", status_code=303)
 
     example = db.query(ExampleFile).filter(ExampleFile.id == file_id).first()
     if not example:
@@ -312,8 +275,6 @@ async def download_example_file(
     file_id: int,
     db: Session = Depends(get_db),
 ):
-    if not request.session.get("pin_authenticated"):
-        return RedirectResponse("/login", status_code=303)
 
     example = db.query(ExampleFile).filter(ExampleFile.id == file_id).first()
     if not example:
@@ -343,8 +304,6 @@ async def delete_example_file(
     file_id: int,
     db: Session = Depends(get_db),
 ):
-    if not request.session.get("pin_authenticated"):
-        return RedirectResponse("/login", status_code=303)
 
     example = db.query(ExampleFile).filter(ExampleFile.id == file_id).first()
     if example:
@@ -362,8 +321,6 @@ async def delete_example_file(
 
 @app.get("/examples", response_class=HTMLResponse)
 async def examples_page(request: Request, db: Session = Depends(get_db)):
-    if not request.session.get("pin_authenticated"):
-        return RedirectResponse("/login", status_code=303)
 
     examples = db.query(ExampleFile).order_by(ExampleFile.created_at.desc()).all()
     
@@ -376,8 +333,6 @@ async def examples_page(request: Request, db: Session = Depends(get_db)):
 # === Google OAuth (Drive/Sheets 연동용 - 선택) ===
 @app.get("/auth/google")
 async def google_login(request: Request):
-    if not request.session.get("pin_authenticated"):
-        return RedirectResponse("/login", status_code=303)
     redirect_uri = request.url_for('google_callback')
     return await oauth.google.authorize_redirect(request, redirect_uri)
 
@@ -412,16 +367,12 @@ async def google_callback(request: Request, db: Session = Depends(get_db)):
 # === 앱 루트 — 이수증으로 안내 (구 대시보드/홈페이지는 삭제) ===
 @app.get("/", response_class=HTMLResponse)
 async def index(request: Request):
-    if not request.session.get("pin_authenticated"):
-        return RedirectResponse("/login", status_code=303)
     return RedirectResponse("/certificate", status_code=303)
 
 
 # === 이수증 ===
 @app.get("/certificate", response_class=HTMLResponse)
 async def certificate_page(request: Request, db: Session = Depends(get_db)):
-    if not request.session.get("pin_authenticated"):
-        return RedirectResponse("/login", status_code=303)
 
     # 각 교육별 이수 현황 집계
     legal_stats = {}
@@ -452,8 +403,6 @@ async def certificate_page(request: Request, db: Session = Depends(get_db)):
 
 @app.get("/certificate/legal", response_class=HTMLResponse)
 async def legal_education_page(request: Request, db: Session = Depends(get_db)):
-    if not request.session.get("pin_authenticated"):
-        return RedirectResponse("/login", status_code=303)
 
     current_year = datetime.now().year
     educations = db.query(LegalEducation).filter(
@@ -478,8 +427,6 @@ async def legal_education_page(request: Request, db: Session = Depends(get_db)):
 
 @app.get("/certificate/safety", response_class=HTMLResponse)
 async def safety_education_page(request: Request, db: Session = Depends(get_db)):
-    if not request.session.get("pin_authenticated"):
-        return RedirectResponse("/login", status_code=303)
 
     current_year = datetime.now().year
     educations = db.query(SafetyEducation).filter(
@@ -510,8 +457,6 @@ async def upload_legal_certificate(
     year: int = Form(default=datetime.now().year),
     db: Session = Depends(get_db),
 ):
-    if not request.session.get("pin_authenticated"):
-        return RedirectResponse("/login", status_code=303)
 
     if not file.filename.lower().endswith(".pdf"):
         flash(request, "PDF 파일만 업로드 가능합니다.", "danger")
@@ -597,8 +542,6 @@ async def toggle_legal_education(
     is_completed: bool = Form(default=True),
     db: Session = Depends(get_db),
 ):
-    if not request.session.get("pin_authenticated"):
-        return RedirectResponse("/login", status_code=303)
 
     user_id = 1
     edu = db.query(LegalEducation).filter(
@@ -641,8 +584,6 @@ async def upload_safety_certificate(
     edu_method: str = Form(...),
     db: Session = Depends(get_db),
 ):
-    if not request.session.get("pin_authenticated"):
-        return RedirectResponse("/login", status_code=303)
 
     if not file.filename.lower().endswith(".pdf"):
         flash(request, "PDF 파일만 업로드 가능합니다.", "danger")
@@ -732,8 +673,6 @@ async def add_safety_education(
     memo: str = Form(""),
     db: Session = Depends(get_db),
 ):
-    if not request.session.get("pin_authenticated"):
-        return RedirectResponse("/login", status_code=303)
 
     user_id = 1
     edu = SafetyEducation(
@@ -759,8 +698,6 @@ async def delete_safety_education(
     edu_id: int,
     db: Session = Depends(get_db),
 ):
-    if not request.session.get("pin_authenticated"):
-        return RedirectResponse("/login", status_code=303)
 
     edu = db.query(SafetyEducation).filter(SafetyEducation.id == edu_id).first()
     if edu:
@@ -773,8 +710,6 @@ async def delete_safety_education(
 # === 학전 교육 ===
 @app.get("/certificate/school", response_class=HTMLResponse)
 async def school_education_page(request: Request, db: Session = Depends(get_db)):
-    if not request.session.get("pin_authenticated"):
-        return RedirectResponse("/login", status_code=303)
 
     current_year = datetime.now().year
     educations = db.query(SchoolEducation).filter(
@@ -807,8 +742,6 @@ async def upload_school_certificate(
     edu_method: str = Form(...),
     db: Session = Depends(get_db),
 ):
-    if not request.session.get("pin_authenticated"):
-        return RedirectResponse("/login", status_code=303)
 
     if not file.filename.lower().endswith(".pdf"):
         flash(request, "PDF 파일만 업로드 가능합니다.", "danger")
@@ -898,8 +831,6 @@ async def add_school_education(
     memo: str = Form(""),
     db: Session = Depends(get_db),
 ):
-    if not request.session.get("pin_authenticated"):
-        return RedirectResponse("/login", status_code=303)
 
     user_id = 1
     edu = SchoolEducation(
@@ -925,8 +856,6 @@ async def delete_school_education(
     edu_id: int,
     db: Session = Depends(get_db),
 ):
-    if not request.session.get("pin_authenticated"):
-        return RedirectResponse("/login", status_code=303)
 
     edu = db.query(SchoolEducation).filter(SchoolEducation.id == edu_id).first()
     if edu:
@@ -938,8 +867,6 @@ async def delete_school_education(
 
 @app.get("/upload", response_class=HTMLResponse)
 async def upload_page(request: Request):
-    if not request.session.get("pin_authenticated"):
-        return RedirectResponse("/login", status_code=303)
     return templates.TemplateResponse("upload.html", {"request": request})
 
 
@@ -950,8 +877,6 @@ async def upload_file(
     upload_mode: str = Form("single"),
     db: Session = Depends(get_db),
 ):
-    if not request.session.get("pin_authenticated"):
-        return RedirectResponse("/login", status_code=303)
 
     # 단일 파일 업로드 모드
     if upload_mode == "single" or len(files) == 1:
@@ -1119,8 +1044,6 @@ async def upload_with_password(
     password: str = Form(...),
     db: Session = Depends(get_db),
 ):
-    if not request.session.get("pin_authenticated"):
-        return RedirectResponse("/login", status_code=303)
 
     temp_path = request.session.get("pending_pdf_temp")
     filename = request.session.get("pending_pdf_name")
@@ -1202,8 +1125,6 @@ async def upload_with_password(
 # === 변환 설정 ===
 @app.get("/convert/{conversion_id}", response_class=HTMLResponse)
 async def convert_page(request: Request, conversion_id: int, db: Session = Depends(get_db)):
-    if not request.session.get("pin_authenticated"):
-        return RedirectResponse("/login", status_code=303)
     conversion = db.query(Conversion).filter(Conversion.id == conversion_id).first()
     if not conversion:
         flash(request, "변환 레코드를 찾을 수 없습니다.", "danger")
@@ -1222,8 +1143,6 @@ async def start_conversion(
     pdf_type: Optional[str] = Form(None),
     db: Session = Depends(get_db),
 ):
-    if not request.session.get("pin_authenticated"):
-        return RedirectResponse("/login", status_code=303)
 
     conversion = db.query(Conversion).filter(Conversion.id == conversion_id).first()
     if not conversion:
@@ -1297,8 +1216,6 @@ async def start_conversion(
 # === 다운로드 ===
 @app.get("/download/{conversion_id}", response_class=HTMLResponse)
 async def download_page(request: Request, conversion_id: int, db: Session = Depends(get_db)):
-    if not request.session.get("pin_authenticated"):
-        return RedirectResponse("/login", status_code=303)
     conversion = db.query(Conversion).filter(Conversion.id == conversion_id).first()
     if not conversion:
         flash(request, "변환 레코드를 찾을 수 없습니다.", "danger")
@@ -1311,8 +1228,6 @@ async def download_page(request: Request, conversion_id: int, db: Session = Depe
 
 @app.get("/download/{conversion_id}/file")
 async def download_file(request: Request, conversion_id: int, db: Session = Depends(get_db)):
-    if not request.session.get("pin_authenticated"):
-        raise HTTPException(status_code=403, detail="인증이 필요합니다.")
     conversion = db.query(Conversion).filter(Conversion.id == conversion_id).first()
     if not conversion or conversion.status != "completed":
         raise HTTPException(status_code=404, detail="파일을 찾을 수 없습니다.")
@@ -1333,8 +1248,6 @@ async def download_file(request: Request, conversion_id: int, db: Session = Depe
 # === API ===
 @app.get("/api/status/{conversion_id}")
 async def get_status(request: Request, conversion_id: int, db: Session = Depends(get_db)):
-    if not request.session.get("pin_authenticated"):
-        raise HTTPException(status_code=403, detail="인증이 필요합니다.")
     conversion = db.query(Conversion).filter(Conversion.id == conversion_id).first()
     if not conversion:
         raise HTTPException(status_code=404, detail="변환 레코드를 찾을 수 없습니다.")
@@ -1351,8 +1264,6 @@ async def get_status(request: Request, conversion_id: int, db: Session = Depends
 
 @app.delete("/api/file/{conversion_id}")
 async def delete_file(request: Request, conversion_id: int, db: Session = Depends(get_db)):
-    if not request.session.get("pin_authenticated"):
-        raise HTTPException(status_code=403, detail="인증이 필요합니다.")
     conversion = db.query(Conversion).filter(Conversion.id == conversion_id).first()
     if not conversion:
         raise HTTPException(status_code=404, detail="변환 레코드를 찾을 수 없습니다.")
@@ -1375,8 +1286,6 @@ async def delete_file(request: Request, conversion_id: int, db: Session = Depend
 # === 배치 처리 ===
 @app.get("/batch", response_class=HTMLResponse)
 async def batch_page(request: Request, db: Session = Depends(get_db)):
-    if not request.session.get("pin_authenticated"):
-        return RedirectResponse("/login", status_code=303)
     google_user = get_google_user(request, db)
     return templates.TemplateResponse("batch.html", {
         "request": request,
@@ -1390,8 +1299,6 @@ async def batch_upload(
     files: List[UploadFile] = File(...),
     db: Session = Depends(get_db),
 ):
-    if not request.session.get("pin_authenticated"):
-        return RedirectResponse("/login", status_code=303)
     
     session_id = request.session.get("session_id", str(uuid.uuid4()))
     
@@ -1442,8 +1349,6 @@ async def batch_upload(
 
 @app.get("/batch/confirm", response_class=HTMLResponse)
 async def batch_confirm_page(request: Request):
-    if not request.session.get("pin_authenticated"):
-        return RedirectResponse("/login", status_code=303)
     
     batch_files = request.session.get("batch_files", [])
     if not batch_files:
@@ -1463,8 +1368,6 @@ async def batch_convert(
     pdf_type: Optional[str] = Form(None),
     db: Session = Depends(get_db),
 ):
-    if not request.session.get("pin_authenticated"):
-        return RedirectResponse("/login", status_code=303)
     
     batch_files = request.session.get("batch_files", [])
     if not batch_files:
@@ -1585,8 +1488,6 @@ async def _process_batch_conversions(conversion_ids: List[int], output_format: s
 
 @app.get("/batch/status/{job_id}", response_class=HTMLResponse)
 async def batch_status_page(request: Request, job_id: str):
-    if not request.session.get("pin_authenticated"):
-        return RedirectResponse("/login", status_code=303)
     
     job = batch_processor.get_job(job_id)
     if not job:
@@ -1601,8 +1502,6 @@ async def batch_status_page(request: Request, job_id: str):
 
 @app.get("/api/batch/status/{job_id}")
 async def get_batch_status(request: Request, job_id: str):
-    if not request.session.get("pin_authenticated"):
-        raise HTTPException(status_code=403, detail="인증이 필요합니다.")
     
     job = batch_processor.get_job(job_id)
     if not job:
@@ -1619,8 +1518,6 @@ async def sync_to_sheets(
     spreadsheet_id: Optional[str] = None,
     db: Session = Depends(get_db),
 ):
-    if not request.session.get("pin_authenticated"):
-        return RedirectResponse("/login", status_code=303)
     
     user = get_google_user(request, db)
     if not user:
@@ -1667,8 +1564,6 @@ async def sync_to_sheets(
 
 @app.get("/sheets/list")
 async def list_sheets(request: Request, db: Session = Depends(get_db)):
-    if not request.session.get("pin_authenticated"):
-        raise HTTPException(status_code=403, detail="인증이 필요합니다.")
     
     user = get_google_user(request, db)
     if not user:
@@ -1685,8 +1580,6 @@ async def list_sheets(request: Request, db: Session = Depends(get_db)):
 # === 속도 최적화 API ===
 @app.get("/api/cache/clear")
 async def clear_cache(request: Request):
-    if not request.session.get("pin_authenticated"):
-        raise HTTPException(status_code=403, detail="인증이 필요합니다.")
     
     parallel_processor.cache.clear()
     return JSONResponse({"message": "캐시가 삭제되었습니다."})

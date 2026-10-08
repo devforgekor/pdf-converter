@@ -28,17 +28,9 @@ templates.env.globals["csrf_token"] = generate_csrf_token
 router = APIRouter()
 
 
-def require_auth(request: Request):
-    if not request.session.get("pin_authenticated"):
-        return True
-    return False
-
-
 # === 템플릿 관리 페이지 ===
 @router.get("/admin/templates", response_class=HTMLResponse)
 async def admin_templates_page(request: Request, db: Session = Depends(get_db)):
-    if require_auth(request):
-        return RedirectResponse("/login", status_code=303)
 
     templates_list = db.query(CertificateTemplate).order_by(CertificateTemplate.created_at.desc()).all()
     examples = db.query(ExampleFile).filter(ExampleFile.file_type == "excel").all()
@@ -62,8 +54,6 @@ async def create_template(
     output_start_row: int = Form(2),
     db: Session = Depends(get_db),
 ):
-    if require_auth(request):
-        return RedirectResponse("/login", status_code=303)
 
     form_object_name = None
     form_original_name = None
@@ -97,8 +87,6 @@ async def delete_template(
     template_id: int,
     db: Session = Depends(get_db),
 ):
-    if require_auth(request):
-        return RedirectResponse("/login", status_code=303)
 
     template = db.query(CertificateTemplate).filter(CertificateTemplate.id == template_id).first()
     if template:
@@ -114,8 +102,6 @@ async def edit_template_page(
     template_id: int,
     db: Session = Depends(get_db),
 ):
-    if require_auth(request):
-        return RedirectResponse("/login", status_code=303)
 
     template = db.query(CertificateTemplate).filter(CertificateTemplate.id == template_id).first()
     if not template:
@@ -143,8 +129,6 @@ async def update_template(
     output_start_row: int = Form(2),
     db: Session = Depends(get_db),
 ):
-    if require_auth(request):
-        return RedirectResponse("/login", status_code=303)
 
     template = db.query(CertificateTemplate).filter(CertificateTemplate.id == template_id).first()
     if not template:
@@ -181,8 +165,6 @@ async def learn_from_example(
     file: UploadFile = File(...),
     db: Session = Depends(get_db),
 ):
-    if require_auth(request):
-        return RedirectResponse("/login", status_code=303)
 
     template = db.query(CertificateTemplate).filter(CertificateTemplate.id == template_id).first()
     if not template:
@@ -219,8 +201,6 @@ async def learn_preview(
     db: Session = Depends(get_db),
 ):
     """학습된 파싱 규칙 미리보기 (API)"""
-    if require_auth(request):
-        return JSONResponse({"error": "unauthorized"}, status_code=401)
 
     template = db.query(CertificateTemplate).filter(CertificateTemplate.id == template_id).first()
     if not template:
@@ -239,8 +219,6 @@ async def learn_preview(
 # === 이수증 자동 파싱 ===
 @router.get("/certificate/auto-parse", response_class=HTMLResponse)
 async def auto_parse_page(request: Request, db: Session = Depends(get_db)):
-    if require_auth(request):
-        return RedirectResponse("/login", status_code=303)
 
     templates_list = db.query(CertificateTemplate).all()
     return templates.TemplateResponse("admin_auto_parse.html", {
@@ -256,8 +234,6 @@ async def auto_parse_certificate(
     file: UploadFile = File(...),
     db: Session = Depends(get_db),
 ):
-    if require_auth(request):
-        return RedirectResponse("/login", status_code=303)
 
     template = db.query(CertificateTemplate).filter(CertificateTemplate.id == template_id).first()
     if not template:
@@ -418,8 +394,6 @@ async def auto_parse_certificate(
 # === 파싱 기록 관리 ===
 @router.get("/certificate/records", response_class=HTMLResponse)
 async def certificate_records_page(request: Request, db: Session = Depends(get_db)):
-    if require_auth(request):
-        return RedirectResponse("/login", status_code=303)
 
     records = db.query(CertificateRecord).order_by(CertificateRecord.created_at.desc()).all()
     templates_list = db.query(CertificateTemplate).all()
@@ -436,8 +410,6 @@ async def certificate_record_detail(
     record_id: int,
     db: Session = Depends(get_db),
 ):
-    if require_auth(request):
-        return RedirectResponse("/login", status_code=303)
 
     record = db.query(CertificateRecord).filter(CertificateRecord.id == record_id).first()
     if not record:
@@ -466,8 +438,6 @@ async def delete_certificate_record(
     record_id: int,
     db: Session = Depends(get_db),
 ):
-    if require_auth(request):
-        return RedirectResponse("/login", status_code=303)
 
     record = db.query(CertificateRecord).filter(CertificateRecord.id == record_id).first()
     if record:
@@ -489,8 +459,6 @@ async def export_certificate_records(
     record_ids: str = Form(""),
     db: Session = Depends(get_db),
 ):
-    if require_auth(request):
-        return RedirectResponse("/login", status_code=303)
 
     template = db.query(CertificateTemplate).filter(CertificateTemplate.id == template_id).first()
     if not template:

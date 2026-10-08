@@ -25,14 +25,14 @@
 
     <footer class="footer">
         <p>&copy; 2024 PDF2Sheet. All rights reserved.</p>
-        {% if request.session.get("pin_authenticated") %}
         <p class="footer-actions">
             <a href="/examples">예시 파일</a>
+            {% if request.session.get("user_id") %}
             <form action="/logout" method="post" class="nav-form">
-                <button type="submit" class="btn btn-outline btn-small">로그아웃</button>
+                <button type="submit" class="btn btn-outline btn-small">Google 연결 해제</button>
             </form>
+            {% endif %}
         </p>
-        {% endif %}
     </footer>
 
     {% block extra_js %}{% endblock %}
