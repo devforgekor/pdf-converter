@@ -11,25 +11,6 @@
     {% block extra_css %}{% endblock %}
 </head>
 <body>
-    <nav class="navbar">
-        <div class="nav-brand">
-            <a href="https://kuhwa.duckdns.org/">KUHWA</a>
-        </div>
-        <div class="nav-menu">
-            {% if request.session.get("pin_authenticated") %}
-                <a href="/schedule" class="nav-link">학사일정</a>
-                <a href="/certificate" class="nav-link">이수증</a>
-                <a href="/timetable" class="nav-link">시간표</a>
-                <a href="/records" class="nav-link">학적</a>
-                <a href="/examples" class="nav-link">예시 파일</a>
-                <form action="/logout" method="post" class="nav-form">
-                    <button type="submit" class="btn btn-outline btn-small">로그아웃</button>
-                </form>
-            {% else %}
-                <a href="/login" class="nav-link">로그인</a>
-            {% endif %}
-        </div>
-    </nav>
 
     <main class="container">
         {% set messages = get_flashed_messages(request) %}
@@ -44,6 +25,14 @@
 
     <footer class="footer">
         <p>&copy; 2024 PDF2Sheet. All rights reserved.</p>
+        {% if request.session.get("pin_authenticated") %}
+        <p class="footer-actions">
+            <a href="/examples">예시 파일</a>
+            <form action="/logout" method="post" class="nav-form">
+                <button type="submit" class="btn btn-outline btn-small">로그아웃</button>
+            </form>
+        </p>
+        {% endif %}
     </footer>
 
     {% block extra_js %}{% endblock %}

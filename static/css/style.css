@@ -44,46 +44,6 @@ body {
 }
 
 /* Navbar */
-.navbar {
-    background: white;
-    border-bottom: 1px solid var(--gray-200);
-    padding: 1rem 2rem;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    box-shadow: var(--shadow);
-}
-
-.nav-brand a {
-    font-size: 1.5rem;
-    font-weight: bold;
-    color: var(--primary);
-    text-decoration: none;
-}
-
-.nav-menu {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-}
-
-.nav-link {
-    color: var(--gray-700);
-    text-decoration: none;
-    padding: 0.5rem 1rem;
-    border-radius: var(--radius);
-    transition: background 0.2s;
-}
-
-.nav-link:hover {
-    background: var(--gray-100);
-}
-
-.nav-user {
-    color: var(--gray-500);
-    padding: 0.5rem 1rem;
-}
-
 .nav-form {
     display: inline;
 }
@@ -689,6 +649,23 @@ body {
     background: white;
 }
 
+.footer-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    align-items: center;
+    margin-top: 0.5rem;
+}
+
+.footer-actions a {
+    color: var(--gray-500);
+    text-decoration: none;
+}
+
+.footer-actions a:hover {
+    color: var(--gray-700);
+}
+
 /* Upload Options */
 .upload-options {
     display: flex;
@@ -801,23 +778,6 @@ body {
 
 /* Responsive */
 @media (max-width: 768px) {
-    .navbar {
-        flex-direction: column;
-        gap: 1rem;
-        padding: 1rem;
-    }
-    
-    .nav-menu {
-        flex-wrap: wrap;
-        justify-content: center;
-        gap: 0.5rem;
-    }
-    
-    .nav-link {
-        padding: 0.5rem 0.75rem;
-        font-size: 0.875rem;
-    }
-    
     .container {
         padding: 1rem;
     }
@@ -940,14 +900,6 @@ body {
 
 /* Small phones */
 @media (max-width: 400px) {
-    .navbar {
-        padding: 0.75rem;
-    }
-    
-    .nav-brand a {
-        font-size: 1.25rem;
-    }
-    
     .container {
         padding: 0.75rem;
     }
@@ -987,12 +939,6 @@ body {
         min-width: 44px;
     }
     
-    .nav-link {
-        min-height: 44px;
-        display: flex;
-        align-items: center;
-    }
-    
     .form-group input,
     .form-group select {
         min-height: 44px;
@@ -1019,9 +965,8 @@ body {
         background-color: #111827;
     }
     
-    .navbar,
-    .auth-card,
-    .upload-card,
+        .auth-card,
+        .upload-card,
     .convert-card,
     .download-card,
     .recent-card,
@@ -1037,9 +982,8 @@ body {
 }
 
 /* Print styles */
-@media print {
-    .navbar,
-    .footer,
+    @media print {
+        .footer,
     .btn,
     .alert {
         display: none !important;

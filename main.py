@@ -936,34 +936,6 @@ async def delete_school_education(
     return RedirectResponse("/certificate/school", status_code=303)
 
 
-# === 학사일정 (준비 중) ===
-@app.get("/schedule", response_class=HTMLResponse)
-async def schedule_page(request: Request):
-    if not request.session.get("pin_authenticated"):
-        return RedirectResponse("/login", status_code=303)
-    flash(request, "학사일정 기능은 준비 중입니다.", "info")
-    return RedirectResponse("/", status_code=303)
-
-
-# === 시간표 (준비 중) ===
-@app.get("/timetable", response_class=HTMLResponse)
-async def timetable_page(request: Request):
-    if not request.session.get("pin_authenticated"):
-        return RedirectResponse("/login", status_code=303)
-    flash(request, "시간표 기능은 준비 중입니다.", "info")
-    return RedirectResponse("/", status_code=303)
-
-
-# === 학적 (준비 중) ===
-@app.get("/records", response_class=HTMLResponse)
-async def records_page(request: Request):
-    if not request.session.get("pin_authenticated"):
-        return RedirectResponse("/login", status_code=303)
-    flash(request, "학적 기능은 준비 중입니다.", "info")
-    return RedirectResponse("/", status_code=303)
-
-
-# === PDF 업로드 ===
 @app.get("/upload", response_class=HTMLResponse)
 async def upload_page(request: Request):
     if not request.session.get("pin_authenticated"):
