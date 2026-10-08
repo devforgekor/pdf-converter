@@ -30,8 +30,13 @@
                 <label for="output_format">출력 형식</label>
                 <select id="output_format" name="output_format" required>
                     <option value="excel" selected>Excel (.xlsx)</option>
+                    {% if user %}
                     <option value="sheets">Google 스프레드시트</option>
+                    {% endif %}
                 </select>
+                {% if not user %}
+                <small><a href="/auth/google">Google 계정 연결</a> 시 스프레드시트로 저장 가능</small>
+                {% endif %}
             </div>
             
             <div class="form-group">

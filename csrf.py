@@ -1,3 +1,10 @@
+"""
+CSRF 토큰 관리
+
+참조 소스:
+- Flask-WTF CSRF 보호 패턴을 FastAPI로 포팅
+- 더블 서브밋 쿠키 방식: secrets.token_urlsafe() + secrets.compare_digest()
+"""
 import secrets
 from fastapi import Request
 

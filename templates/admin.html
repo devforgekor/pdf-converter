@@ -1,0 +1,575 @@
+{% extends "base.html" %}
+
+{% block title %}관리자 - KUHWA Portal{% endblock %}
+
+{% block content %}
+<div class="admin-container">
+    <div class="admin-header">
+        <h1>관리자 페이지</h1>
+        <p class="admin-subtitle">시스템 설정 및 관리</p>
+    </div>
+
+    <!-- 통계 카드 -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-icon users">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="9" cy="7" r="4"></circle>
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                </svg>
+            </div>
+            <div class="stat-info">
+                <span class="stat-label">등록 사용자</span>
+                <span class="stat-value">{{ stats.total_users }}</span>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon conversions">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                    <polyline points="14 2 14 8 20 8"></polyline>
+                </svg>
+            </div>
+            <div class="stat-info">
+                <span class="stat-label">전체 변환</span>
+                <span class="stat-value">{{ stats.total_conversions }}</span>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon completed">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                    <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                </svg>
+            </div>
+            <div class="stat-info">
+                <span class="stat-label">완료된 변환</span>
+                <span class="stat-value">{{ stats.completed_conversions }}</span>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon legal">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                </svg>
+            </div>
+            <div class="stat-info">
+                <span class="stat-label">법정의무교육</span>
+                <span class="stat-value">{{ stats.total_legal }}</span>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon safety">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                    <line x1="12" y1="9" x2="12" y2="13"></line>
+                    <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                </svg>
+            </div>
+            <div class="stat-info">
+                <span class="stat-label">안전교육</span>
+                <span class="stat-value">{{ stats.total_safety }}</span>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon school">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M22 10v6M2 10l10-5 10 5-10 5z"></path>
+                    <path d="M6 12v5c3 3 9 3 12 0v-5"></path>
+                </svg>
+            </div>
+            <div class="stat-info">
+                <span class="stat-label">학교 교육</span>
+                <span class="stat-value">{{ stats.total_school }}</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="admin-grid">
+        <!-- 사용자 관리 -->
+        <div class="admin-section">
+            <div class="section-header">
+                <h2>사용자 관리</h2>
+                <button class="btn btn-primary btn-small" onclick="showAddUserModal()">+ 사용자 추가</button>
+            </div>
+            
+            <div class="user-list">
+                {% if users %}
+                    {% for user in users %}
+                    <div class="user-item">
+                        <div class="user-info">
+                            <span class="user-name">{{ user.username }}</span>
+                            <span class="user-email">{{ user.email }}</span>
+                        </div>
+                        <div class="user-actions">
+                            <form action="/admin/user/delete/{{ user.id }}" method="post" style="display:inline;">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token(request) }}">
+                                <button type="submit" class="btn btn-small btn-outline" onclick="return confirm('정말 삭제하시겠습니까?')">삭제</button>
+                            </form>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="empty-state">등록된 사용자가 없습니다.</div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- 최근 변환 이력 -->
+        <div class="admin-section">
+            <div class="section-header">
+                <h2>최근 변환 이력</h2>
+            </div>
+            
+            <div class="conversion-list">
+                {% if recent_conversions %}
+                    {% for conv in recent_conversions %}
+                    <div class="conversion-item">
+                        <div class="conversion-info">
+                            <span class="conversion-filename">{{ conv.original_filename }}</span>
+                            <span class="conversion-date">{{ conv.created_at.strftime('%Y-%m-%d %H:%M') }}</span>
+                        </div>
+                        <div class="conversion-status">
+                            {% if conv.status == 'completed' %}
+                                <span class="status-badge success">완료</span>
+                            {% elif conv.status == 'processing' %}
+                                <span class="status-badge warning">변환 중</span>
+                            {% elif conv.status == 'failed' %}
+                                <span class="status-badge danger">실패</span>
+                            {% else %}
+                                <span class="status-badge">대기</span>
+                            {% endif %}
+                            <form action="/admin/conversion/delete/{{ conv.id }}" method="post" style="display:inline;">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token(request) }}">
+                                <button type="submit" class="btn btn-small btn-outline" onclick="return confirm('정말 삭제하시겠습니까?')">삭제</button>
+                            </form>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="empty-state">변환 이력이 없습니다.</div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- 예시 파일 관리 -->
+    <div class="admin-section-full">
+        <div class="section-header">
+            <h2>예시 파일 관리</h2>
+            <a href="/examples" class="btn btn-outline btn-small">사용자 페이지 보기</a>
+        </div>
+        
+        <div class="upload-section">
+            <form id="example-upload-form" action="/admin/example/upload" method="post" enctype="multipart/form-data">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token(request) }}">
+                
+                <div class="form-group">
+                    <label for="description">설명</label>
+                    <input type="text" id="description" name="description" placeholder="파일 설명 (선택사항)">
+                </div>
+                
+                <div class="upload-zone" id="example-upload-zone">
+                    <div class="upload-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="17 8 12 3 7 8"></polyline>
+                            <line x1="12" y1="3" x2="12" y2="15"></line>
+                        </svg>
+                    </div>
+                    <p class="upload-text">파일을 드래그하거나 클릭하여 선택</p>
+                    <p class="upload-hint">Excel, PDF, Word, 이미지 파일 지원</p>
+                    <input type="file" name="file" id="example-file-input" accept=".xlsx,.xls,.csv,.pdf,.doc,.docx,.jpg,.jpeg,.png,.gif" hidden required>
+                </div>
+                
+                <div class="file-info" id="example-file-info" style="display: none;">
+                    <span class="file-name" id="example-file-name"></span>
+                    <span class="file-size" id="example-file-size"></span>
+                </div>
+                
+                <button type="submit" class="btn btn-primary" id="example-upload-btn" disabled>업로드</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- 사용자 추가 모달 -->
+<div class="modal" id="add-user-modal" style="display: none;">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>사용자 추가</h3>
+            <button class="modal-close" onclick="closeModal()">&times;</button>
+        </div>
+        <form action="/admin/user/add" method="post">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token(request) }}">
+            
+            <div class="form-group">
+                <label for="username">사용자명</label>
+                <input type="text" id="username" name="username" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="email">이메일</label>
+                <input type="email" id="email" name="email" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="password">비밀번호</label>
+                <input type="password" id="password" name="password" required>
+            </div>
+            
+            <div class="modal-actions">
+                <button type="button" class="btn btn-outline" onclick="closeModal()">취소</button>
+                <button type="submit" class="btn btn-primary">추가</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+.admin-container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.admin-header {
+    margin-bottom: 2rem;
+}
+
+.admin-header h1 {
+    font-size: 1.75rem;
+    margin-bottom: 0.5rem;
+}
+
+.admin-subtitle {
+    color: var(--gray-500);
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.stat-card {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.25rem;
+    background: white;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+}
+
+.stat-icon {
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+}
+
+.stat-icon.users { background: #dbeafe; color: #3b82f6; }
+.stat-icon.conversions { background: #e0e7ff; color: #6366f1; }
+.stat-icon.completed { background: #d1fae5; color: #10b981; }
+.stat-icon.legal { background: #fee2e2; color: #ef4444; }
+.stat-icon.safety { background: #fef3c7; color: #f59e0b; }
+.stat-icon.school { background: #f3e8ff; color: #8b5cf6; }
+
+.stat-label {
+    display: block;
+    font-size: 0.8125rem;
+    color: var(--gray-500);
+}
+
+.stat-value {
+    display: block;
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--gray-900);
+}
+
+.admin-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: 1.5rem;
+}
+
+.admin-section {
+    background: white;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 1.5rem;
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.section-header h2 {
+    margin: 0;
+    font-size: 1.125rem;
+}
+
+.user-list,
+.conversion-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.user-item,
+.conversion-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem;
+    background: var(--gray-50);
+    border-radius: var(--radius);
+}
+
+.user-info,
+.conversion-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.user-name,
+.conversion-filename {
+    font-weight: 500;
+}
+
+.user-email,
+.conversion-date {
+    font-size: 0.8125rem;
+    color: var(--gray-500);
+}
+
+.user-actions,
+.conversion-status {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 2rem;
+    color: var(--gray-500);
+}
+
+.admin-section-full {
+    background: white;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 1.5rem;
+    margin-top: 1.5rem;
+}
+
+.upload-section {
+    margin-top: 1rem;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.upload-zone {
+    border: 2px dashed var(--gray-300);
+    border-radius: var(--radius);
+    padding: 1.5rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-bottom: 1rem;
+}
+
+.upload-zone:hover {
+    border-color: var(--primary);
+    background: rgba(59, 130, 246, 0.05);
+}
+
+.upload-icon {
+    color: var(--gray-400);
+    margin-bottom: 0.75rem;
+}
+
+.upload-text {
+    font-size: 0.9375rem;
+    color: var(--gray-700);
+    margin-bottom: 0.25rem;
+}
+
+.upload-hint {
+    color: var(--gray-500);
+    font-size: 0.8125rem;
+}
+
+.file-info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.75rem;
+    background: var(--gray-50);
+    border-radius: var(--radius);
+    margin-bottom: 1rem;
+}
+
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.modal-content {
+    background: white;
+    padding: 2rem;
+    border-radius: var(--radius);
+    width: 90%;
+    max-width: 400px;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.modal-header h3 {
+    margin: 0;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: var(--gray-500);
+}
+
+.modal-actions {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1.5rem;
+}
+
+.modal-actions .btn {
+    flex: 1;
+}
+
+@media (max-width: 768px) {
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .admin-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .user-item,
+    .conversion-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.75rem;
+    }
+    
+    .user-actions,
+    .conversion-status {
+        width: 100%;
+        justify-content: flex-end;
+    }
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function showAddUserModal() {
+    document.getElementById('add-user-modal').style.display = 'flex';
+}
+
+function closeModal() {
+    document.getElementById('add-user-modal').style.display = 'none';
+}
+
+document.getElementById('add-user-modal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        closeModal();
+    }
+});
+
+// 예시 파일 업로드
+const exampleUploadZone = document.getElementById('example-upload-zone');
+const exampleFileInput = document.getElementById('example-file-input');
+const exampleFileInfo = document.getElementById('example-file-info');
+const exampleUploadBtn = document.getElementById('example-upload-btn');
+
+if (exampleUploadZone) {
+    exampleUploadZone.addEventListener('click', () => exampleFileInput.click());
+    
+    exampleUploadZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        exampleUploadZone.classList.add('dragover');
+    });
+    
+    exampleUploadZone.addEventListener('dragleave', () => {
+        exampleUploadZone.classList.remove('dragover');
+    });
+    
+    exampleUploadZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        exampleUploadZone.classList.remove('dragover');
+        const files = e.dataTransfer.files;
+        if (files.length) {
+            exampleFileInput.files = files;
+            updateExampleFileInfo(files[0]);
+        }
+    });
+    
+    exampleFileInput.addEventListener('change', (e) => {
+        if (e.target.files.length) {
+            updateExampleFileInfo(e.target.files[0]);
+        }
+    });
+}
+
+function updateExampleFileInfo(file) {
+    document.getElementById('example-file-name').textContent = file.name;
+    document.getElementById('example-file-size').textContent = formatFileSize(file.size);
+    exampleFileInfo.style.display = 'flex';
+    exampleUploadBtn.disabled = false;
+}
+
+function formatFileSize(bytes) {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+</script>
+{% endblock %}

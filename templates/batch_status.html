@@ -1,0 +1,145 @@
+{% extends "base.html" %}
+
+{% block title %}배치 처리 상태 - PDF2Sheet{% endblock %}
+
+{% block content %}
+<div class="download-container">
+    <div class="download-card">
+        {% if job.status == 'completed' %}
+            <div class="success-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                    <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                </svg>
+            </div>
+            <h1 class="download-title">배치 변환 완료!</h1>
+            <p class="download-subtitle">{{ job.total }}개 파일이 성공적으로 변환되었습니다</p>
+            
+            <div class="batch-results">
+                {% for result in job.results %}
+                <div class="result-item">
+                    <span class="result-filename">{{ result.filename }}</span>
+                    {% if result.status == 'completed' %}
+                        <a href="/download/{{ result.conversion_id }}" class="btn btn-small btn-primary">다운로드</a>
+                    {% else %}
+                        <span class="status-badge danger">실패</span>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+            
+            <div class="download-actions">
+                <a href="/batch" class="btn btn-primary">새 배치 시작</a>
+                <a href="/" class="btn btn-outline">단일 파일 업로드</a>
+            </div>
+            
+        {% elif job.status == 'failed' %}
+            <div class="error-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="15" y1="9" x2="9" y2="15"></line>
+                    <line x1="9" y1="9" x2="15" y2="15"></line>
+                </svg>
+            </div>
+            <h1 class="download-title">배치 변환 실패</h1>
+            <p class="download-subtitle">{{ job.error_message }}</p>
+            
+            <div class="download-actions">
+                <a href="/batch" class="btn btn-primary">다시 시도</a>
+                <a href="/" class="btn btn-outline">단일 파일 업로드</a>
+            </div>
+            
+        {% else %}
+            <div class="loading-icon">
+                <div class="spinner"></div>
+            </div>
+            <h1 class="download-title">배치 변환 중...</h1>
+            <p class="download-subtitle">{{ job.progress }} / {{ job.total }} 파일 처리 완료</p>
+            
+            <div class="progress-bar">
+                <div class="progress-fill" style="width: {{ (job.progress / job.total * 100) if job.total > 0 else 0 }}%"></div>
+            </div>
+            
+            <div class="batch-results">
+                {% for result in job.results %}
+                <div class="result-item">
+                    <span class="result-filename">{{ result.filename }}</span>
+                    {% if result.status == 'completed' %}
+                        <span class="status-badge success">완료</span>
+                    {% elif result.status == 'failed' %}
+                        <span class="status-badge danger">실패</span>
+                    {% else %}
+                        <span class="status-badge warning">처리 중</span>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+.batch-results {
+    margin: 1.5rem 0;
+    text-align: left;
+}
+
+.result-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem;
+    background: var(--gray-50);
+    border-radius: var(--radius);
+    margin-bottom: 0.5rem;
+}
+
+.result-filename {
+    font-weight: 500;
+    word-break: break-all;
+}
+
+.progress-bar {
+    height: 8px;
+    background: var(--gray-200);
+    border-radius: 4px;
+    overflow: hidden;
+    margin: 1rem 0;
+}
+
+.progress-fill {
+    height: 100%;
+    background: var(--primary);
+    transition: width 0.3s ease;
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+{% if job.status == 'processing' %}
+<script>
+    const jobId = "{{ job.job_id }}";
+    let checkCount = 0;
+    const maxChecks = 120; // 최대 6분
+    
+    async function checkStatus() {
+        try {
+            const response = await fetch(`/api/batch/status/${jobId}`);
+            const data = await response.json();
+            
+            if (data.status === 'completed' || data.status === 'failed') {
+                window.location.reload();
+            } else if (checkCount >= maxChecks) {
+                alert('처리 시간이 너무 오래 걸립니다. 페이지를 새로고침해주세요.');
+            }
+            
+            checkCount++;
+        } catch (error) {
+            console.error('상태 확인 실패:', error);
+        }
+    }
+    
+    setInterval(checkStatus, 3000);
+</script>
+{% endif %}
+{% endblock %}

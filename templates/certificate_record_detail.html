@@ -1,0 +1,257 @@
+{% extends "base.html" %}
+
+{% block title %}기록 상세 - KUHWA Portal{% endblock %}
+
+{% block content %}
+<div class="detail-container">
+    <div class="section-header">
+        <a href="/certificate/records" class="back-link">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="15 18 9 12 15 6"></polyline>
+            </svg>
+            기록 목록
+        </a>
+        <h1>이수증 기록 상세</h1>
+    </div>
+
+    <div class="detail-grid">
+        <div class="detail-card">
+            <div class="card-header">
+                <h2>기본 정보</h2>
+            </div>
+            <div class="card-body">
+                <div class="info-row">
+                    <span class="info-label">성명</span>
+                    <span class="info-value">{{ record.holder_name or '-' }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">과정명</span>
+                    <span class="info-value">{{ record.course_name or '-' }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">이수시간</span>
+                    <span class="info-value">{{ record.hours or '-' }}시간</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">이수번호</span>
+                    <span class="info-value">{{ record.certificate_number or '-' }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">상태</span>
+                    <span class="info-value">
+                        {% if record.status == 'verified' %}
+                            <span class="status-badge success">인증됨</span>
+                        {% elif record.status == 'exported' %}
+                            <span class="status-badge warning">내보내기</span>
+                        {% else %}
+                            <span class="status-badge">파싱됨</span>
+                        {% endif %}
+                    </span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">등록일</span>
+                    <span class="info-value">{{ record.created_at.strftime('%Y-%m-%d %H:%M') }}</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="detail-card">
+            <div class="card-header">
+                <h2>인증 정보</h2>
+            </div>
+            <div class="card-body">
+                <div class="info-row">
+                    <span class="info-label">인증코드</span>
+                    <span class="info-value code">{{ record.verification_code }}</span>
+                </div>
+                {% if template %}
+                    <div class="info-row">
+                        <span class="info-label">템플릿</span>
+                        <span class="info-value">{{ template.name }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">발급기관</span>
+                        <span class="info-value">{{ template.issuer or '-' }}</span>
+                    </div>
+                {% endif %}
+                {% if record.original_pdf_filename %}
+                    <div class="info-row">
+                        <span class="info-label">원본 파일</span>
+                        <span class="info-value">{{ record.original_pdf_filename }}</span>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    {% if parsed_data %}
+        <div class="detail-card full-width">
+            <div class="card-header">
+                <h2>파싱된 데이터</h2>
+            </div>
+            <div class="card-body">
+                <table class="parsed-table">
+                    <thead>
+                        <tr>
+                            <th>필드</th>
+                            <th>값</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for key, value in parsed_data.items() %}
+                            <tr>
+                                <td class="field-name">{{ key }}</td>
+                                <td class="field-value">{{ value }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    {% endif %}
+
+    <div class="action-bar">
+        <form action="/certificate/records/{{ record.id }}/delete" method="post">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token(request) }}">
+            <button type="submit" class="btn btn-danger" onclick="return confirm('정말 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.')">기록 삭제</button>
+        </form>
+    </div>
+</div>
+
+<style>
+.detail-container {
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.section-header {
+    margin-bottom: 2rem;
+}
+
+.back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--gray-500);
+    text-decoration: none;
+    margin-bottom: 1rem;
+    font-size: 0.9375rem;
+}
+
+.back-link:hover {
+    color: var(--gray-700);
+}
+
+.section-header h1 {
+    font-size: 1.75rem;
+}
+
+.detail-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.detail-card {
+    background: white;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+}
+
+.detail-card.full-width {
+    margin-bottom: 1.5rem;
+}
+
+.card-header {
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid var(--gray-200);
+    background: var(--gray-50);
+}
+
+.card-header h2 {
+    font-size: 0.9375rem;
+    font-weight: 600;
+}
+
+.card-body {
+    padding: 1.25rem 1.5rem;
+}
+
+.info-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.625rem 0;
+    border-bottom: 1px solid var(--gray-100);
+}
+
+.info-row:last-child {
+    border-bottom: none;
+}
+
+.info-label {
+    color: var(--gray-500);
+    font-size: 0.875rem;
+}
+
+.info-value {
+    font-weight: 500;
+}
+
+.info-value.code {
+    font-family: monospace;
+    color: var(--primary);
+}
+
+.parsed-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.parsed-table th,
+.parsed-table td {
+    padding: 0.75rem 1rem;
+    text-align: left;
+    border-bottom: 1px solid var(--gray-200);
+}
+
+.parsed-table th {
+    background: var(--gray-50);
+    font-weight: 600;
+    font-size: 0.8125rem;
+    color: var(--gray-700);
+}
+
+.parsed-table tbody tr:hover {
+    background: var(--gray-50);
+}
+
+.field-name {
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.field-value {
+    color: var(--gray-700);
+}
+
+.action-bar {
+    display: flex;
+    justify-content: flex-end;
+}
+
+@media (max-width: 768px) {
+    .detail-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .info-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.25rem;
+    }
+}
+</style>
+{% endblock %}

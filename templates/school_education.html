@@ -1,0 +1,661 @@
+{% extends "base.html" %}
+
+{% block title %}학전 - KUHWA Portal{% endblock %}
+
+{% block content %}
+<div class="school-container">
+    <div class="section-header">
+        <a href="/certificate" class="back-link">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="15 18 9 12 15 6"></polyline>
+            </svg>
+            이수증으로 돌아가기
+        </a>
+        <h1>학전</h1>
+        <p class="section-subtitle">학교-wide 교육 이수 관리</p>
+    </div>
+
+    <div class="year-summary">
+        <div class="year-card">
+            <h3>연도별 이수 현황</h3>
+            <div class="year-grid">
+                {% for year in range(current_year - 2, current_year + 1) %}
+                <div class="year-item">
+                    <span class="year-label">{{ year }}년</span>
+                    <span class="year-hours">{{ yearly_hours.get(year, 0) }}시간</span>
+                </div>
+                {% endfor %}
+            </div>
+            <div class="total-hours">
+                <span class="total-label">최근 3년 합계</span>
+                <span class="total-value">{{ yearly_hours.values()|sum }}시간</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="education-tabs">
+        <button class="tab-btn active" data-tab="list">교육 목록</button>
+        <button class="tab-btn" data-tab="upload">수료증 관리</button>
+    </div>
+
+    <div class="tab-content" id="tab-list">
+        <div class="education-list">
+            <div class="list-header">
+                <h3>이수 내역</h3>
+                <button class="btn btn-primary btn-small" onclick="showAddModal()">+ 추가</button>
+            </div>
+            
+            <div class="list-table">
+                <div class="table-header">
+                    <span class="col-year">연도</span>
+                    <span class="col-name">교육명</span>
+                    <span class="col-hours">이수시간</span>
+                    <span class="col-date">이수일</span>
+                    <span class="col-method">방식</span>
+                    <span class="col-action">관리</span>
+                </div>
+                
+                {% if educations %}
+                    {% for edu in educations %}
+                    <div class="table-row">
+                        <span class="col-year">{{ edu.year }}</span>
+                        <span class="col-name">{{ edu.education_name }}</span>
+                        <span class="col-hours">{{ edu.hours }}시간</span>
+                        <span class="col-date">{{ edu.education_date.strftime('%Y-%m-%d') }}</span>
+                        <span class="col-method">{{ edu.method }}</span>
+                        <span class="col-action">
+                            {% if edu.conversion_id %}
+                                <a href="/download/{{ edu.conversion_id }}" class="btn btn-small btn-outline">다운로드</a>
+                            {% endif %}
+                            <form action="/certificate/school/delete/{{ edu.id }}" method="post" style="display:inline;">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token(request) }}">
+                                <button type="submit" class="btn btn-small btn-outline" onclick="return confirm('정말 삭제하시겠습니까?')">삭제</button>
+                            </form>
+                        </span>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="empty-row">
+                        <span>이수 내역이 없습니다. 수료증을 업로드하거나 직접 추가하세요.</span>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="tab-content" id="tab-upload" style="display: none;">
+        <div class="upload-section">
+            <div class="upload-card">
+                <h3>수료증 업로드</h3>
+                <p>학전 수료증 PDF를 업로드하면 자동으로 정보를 추출합니다.</p>
+                
+                <form id="school-upload-form" action="/certificate/school/upload" method="post" enctype="multipart/form-data">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token(request) }}">
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="edu_year">연도</label>
+                            <select id="edu_year" name="edu_year" required>
+                                <option value="2026">2026년</option>
+                                <option value="2025">2025년</option>
+                                <option value="2024">2024년</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="edu_hours">이수시간</label>
+                            <input type="number" id="edu_hours" name="edu_hours" min="0.5" step="0.5" required placeholder="예: 3">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="edu_name">교육명</label>
+                        <input type="text" id="edu_name" name="edu_name" required placeholder="예: 학전교육 1차">
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="edu_date">이수일</label>
+                            <input type="date" id="edu_date" name="edu_date" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="edu_method">이수방식</label>
+                            <select id="edu_method" name="edu_method" required>
+                                <option value="대면">대면</option>
+                                <option value="비대면">비대면 (온라인)</option>
+                                <option value="혼합">혼합</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="upload-zone" id="upload-zone">
+                        <div class="upload-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                <polyline points="17 8 12 3 7 8"></polyline>
+                                <line x1="12" y1="3" x2="12" y2="15"></line>
+                            </svg>
+                        </div>
+                        <p class="upload-text">수료증 PDF를 드래그하세요</p>
+                        <p class="upload-hint">또는 클릭하여 파일 선택</p>
+                        <input type="file" name="file" id="file-input" accept=".pdf" hidden required>
+                    </div>
+                    
+                    <div class="file-info" id="file-info" style="display: none;">
+                        <span class="file-name" id="file-name"></span>
+                        <span class="file-size" id="file-size"></span>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary btn-block" id="upload-btn" disabled>
+                        업로드 및 등록
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 교육 추가 모달 -->
+<div class="modal" id="add-modal" style="display: none;">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>교육 추가</h3>
+            <button class="modal-close" onclick="closeModal()">&times;</button>
+        </div>
+        <form action="/certificate/school/add" method="post">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token(request) }}">
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="add_year">연도</label>
+                    <select id="add_year" name="year" required>
+                        <option value="2026">2026년</option>
+                        <option value="2025">2025년</option>
+                        <option value="2024">2024년</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="add_hours">이수시간</label>
+                    <input type="number" id="add_hours" name="hours" min="0.5" step="0.5" required>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="add_name">교육명</label>
+                <input type="text" id="add_name" name="name" required placeholder="예: 학전교육">
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="add_date">이수일</label>
+                    <input type="date" id="add_date" name="date" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="add_method">이수방식</label>
+                    <select id="add_method" name="method" required>
+                        <option value="대면">대면</option>
+                        <option value="비대면">비대면</option>
+                        <option value="혼합">혼합</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="add_org">교육기관</label>
+                <input type="text" id="add_org" name="organization" placeholder="선택사항">
+            </div>
+            
+            <div class="form-group">
+                <label for="add_memo">메모</label>
+                <textarea id="add_memo" name="memo" rows="2" placeholder="선택사항"></textarea>
+            </div>
+            
+            <div class="modal-actions">
+                <button type="button" class="btn btn-outline" onclick="closeModal()">취소</button>
+                <button type="submit" class="btn btn-primary">추가</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+.school-container {
+    max-width: 1000px;
+    margin: 0 auto;
+}
+
+.section-header {
+    margin-bottom: 2rem;
+}
+
+.back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--gray-500);
+    text-decoration: none;
+    margin-bottom: 1rem;
+    font-size: 0.9375rem;
+}
+
+.back-link:hover {
+    color: var(--gray-700);
+}
+
+.section-header h1 {
+    font-size: 1.75rem;
+    margin-bottom: 0.5rem;
+}
+
+.section-subtitle {
+    color: var(--gray-500);
+}
+
+.year-summary {
+    margin-bottom: 2rem;
+}
+
+.year-card {
+    background: white;
+    padding: 1.5rem;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+}
+
+.year-card h3 {
+    margin-bottom: 1rem;
+    font-size: 1.125rem;
+}
+
+.year-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.year-item {
+    text-align: center;
+    padding: 1rem;
+    background: var(--gray-50);
+    border-radius: var(--radius);
+}
+
+.year-label {
+    display: block;
+    font-size: 0.875rem;
+    color: var(--gray-500);
+    margin-bottom: 0.25rem;
+}
+
+.year-hours {
+    display: block;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--gray-900);
+}
+
+.total-hours {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+}
+
+.total-label {
+    font-weight: 500;
+}
+
+.total-value {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--primary);
+}
+
+.education-tabs {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 2rem;
+    border-bottom: 1px solid var(--gray-200);
+    padding-bottom: 0.5rem;
+}
+
+.tab-btn {
+    padding: 0.75rem 1.5rem;
+    border: none;
+    background: none;
+    cursor: pointer;
+    font-size: 1rem;
+    color: var(--gray-500);
+    border-radius: var(--radius) var(--radius) 0 0;
+    transition: all 0.2s;
+}
+
+.tab-btn:hover {
+    color: var(--gray-700);
+    background: var(--gray-50);
+}
+
+.tab-btn.active {
+    color: var(--primary);
+    background: white;
+    border-bottom: 2px solid var(--primary);
+}
+
+.education-list {
+    background: white;
+    padding: 1.5rem;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+}
+
+.list-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.list-header h3 {
+    margin: 0;
+    font-size: 1.125rem;
+}
+
+.list-table {
+    overflow-x: auto;
+}
+
+.table-header,
+.table-row {
+    display: grid;
+    grid-template-columns: 1fr 2fr 1fr 1fr 1fr 1fr;
+    gap: 0.5rem;
+    padding: 0.75rem;
+    align-items: center;
+}
+
+.table-header {
+    background: var(--gray-50);
+    font-weight: 600;
+    font-size: 0.8125rem;
+    color: var(--gray-700);
+    border-radius: var(--radius);
+}
+
+.table-row {
+    border-bottom: 1px solid var(--gray-100);
+}
+
+.empty-row {
+    text-align: center;
+    padding: 2rem;
+    color: var(--gray-500);
+}
+
+.upload-section {
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.upload-card {
+    background: white;
+    padding: 2rem;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+}
+
+.upload-card h3 {
+    margin-bottom: 0.5rem;
+}
+
+.upload-card > p {
+    color: var(--gray-500);
+    margin-bottom: 1.5rem;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.upload-zone {
+    border: 2px dashed var(--gray-300);
+    border-radius: var(--radius);
+    padding: 2rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-bottom: 1.5rem;
+}
+
+.upload-zone:hover {
+    border-color: var(--primary);
+    background: rgba(59, 130, 246, 0.05);
+}
+
+.upload-icon {
+    color: var(--gray-400);
+    margin-bottom: 1rem;
+}
+
+.upload-text {
+    font-size: 1rem;
+    color: var(--gray-700);
+    margin-bottom: 0.5rem;
+}
+
+.upload-hint {
+    color: var(--gray-500);
+    font-size: 0.875rem;
+}
+
+.file-info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: var(--gray-50);
+    border-radius: var(--radius);
+    margin-bottom: 1.5rem;
+}
+
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.modal-content {
+    background: white;
+    padding: 2rem;
+    border-radius: var(--radius);
+    width: 90%;
+    max-width: 500px;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.modal-header h3 {
+    margin: 0;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: var(--gray-500);
+}
+
+.modal-actions {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1.5rem;
+}
+
+.modal-actions .btn {
+    flex: 1;
+}
+
+@media (max-width: 768px) {
+    .year-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+    
+    .table-header,
+    .table-row {
+        grid-template-columns: 1fr 1fr;
+        gap: 0.5rem;
+    }
+    
+    .col-year, .col-name {
+        grid-column: span 2;
+    }
+    
+    .education-tabs {
+        flex-wrap: wrap;
+    }
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // 탭 전환
+    const tabBtns = document.querySelectorAll('.tab-btn');
+    const tabContents = document.querySelectorAll('.tab-content');
+    
+    tabBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const tabId = btn.dataset.tab;
+            
+            tabBtns.forEach(b => b.classList.remove('active'));
+            tabContents.forEach(c => c.style.display = 'none');
+            
+            btn.classList.add('active');
+            document.getElementById('tab-' + tabId).style.display = 'block';
+        });
+    });
+    
+    // 업로드 폼 처리
+    const uploadForm = document.getElementById('school-upload-form');
+    const uploadZone = document.getElementById('upload-zone');
+    const fileInput = document.getElementById('file-input');
+    const fileInfo = document.getElementById('file-info');
+    const uploadBtn = document.getElementById('upload-btn');
+    
+    if (uploadForm) {
+        uploadForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            if (!fileInput.files.length) {
+                alert('파일을 선택해주세요.');
+                return;
+            }
+            const formData = new FormData(uploadForm);
+            uploadBtn.disabled = true;
+            uploadBtn.textContent = '업로드 중...';
+            
+            fetch('/certificate/school/upload', {
+                method: 'POST',
+                body: formData
+            }).then(response => {
+                if (response.redirected) {
+                    window.location.href = response.url;
+                } else if (response.ok) {
+                    window.location.reload();
+                } else {
+                    return response.json().then(data => {
+                        throw new Error(data.detail || '업로드 실패');
+                    });
+                }
+            }).catch(err => {
+                alert('업로드 중 오류가 발생했습니다: ' + err.message);
+                uploadBtn.disabled = false;
+                uploadBtn.textContent = '업로드 및 등록';
+            });
+        });
+    }
+    
+    if (uploadZone) {
+        uploadZone.addEventListener('click', () => fileInput.click());
+        
+        uploadZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadZone.classList.add('dragover');
+        });
+        
+        uploadZone.addEventListener('dragleave', () => {
+            uploadZone.classList.remove('dragover');
+        });
+        
+        uploadZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadZone.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length) {
+                fileInput.files = files;
+                updateFileInfo(files[0]);
+            }
+        });
+        
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length) {
+                updateFileInfo(e.target.files[0]);
+            }
+        });
+    }
+    
+    function updateFileInfo(file) {
+        document.getElementById('file-name').textContent = file.name;
+        document.getElementById('file-size').textContent = formatFileSize(file.size);
+        fileInfo.style.display = 'flex';
+        uploadBtn.disabled = false;
+    }
+    
+    function formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+});
+
+function showAddModal() {
+    document.getElementById('add-modal').style.display = 'flex';
+}
+
+function closeModal() {
+    document.getElementById('add-modal').style.display = 'none';
+}
+
+document.getElementById('add-modal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        closeModal();
+    }
+});
+</script>
+{% endblock %}

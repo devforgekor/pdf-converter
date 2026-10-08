@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+
+{% block title %}배치 변환 확인 - PDF2Sheet{% endblock %}
+
+{% block content %}
+<div class="convert-container">
+    <div class="convert-card">
+        <h1 class="convert-title">배치 변환 확인</h1>
+        <p class="convert-subtitle">{{ files|length }}개 파일이 업로드되었습니다</p>
+        
+        <div class="file-preview-list">
+            {% for file in files %}
+            <div class="file-preview">
+                <div class="file-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14 2 14 8 20 8"></polyline>
+                    </svg>
+                </div>
+                <div class="file-details">
+                    <p class="file-name">{{ file.filename }}</p>
+                    <p class="file-size">{{ "%.1f"|format(file.file_size / 1024 / 1024) }} MB</p>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <form action="/batch/convert" method="post" class="convert-form">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token(request) }}">
+            
+            <div class="form-group">
+                <label for="output_format">출력 형식</label>
+                <select id="output_format" name="output_format" required>
+                    <option value="excel" selected>Excel (.xlsx)</option>
+                    {% if user %}
+                    <option value="sheets">Google 스프레드시트</option>
+                    {% endif %}
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="pdf_type">PDF 유형 (선택사항)</label>
+                <select id="pdf_type" name="pdf_type">
+                    <option value="">자동 감지</option>
+                    <option value="roster">명단</option>
+                    <option value="receipt">영수증</option>
+                    <option value="certificate">이수증</option>
+                </select>
+                <small>모든 파일에 동일한 유형을 적용합니다</small>
+            </div>
+            
+            <div class="form-actions">
+                <a href="/batch" class="btn btn-outline">취소</a>
+                <button type="submit" class="btn btn-primary">배치 변환 시작</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+.convert-subtitle {
+    text-align: center;
+    color: var(--gray-500);
+    margin-bottom: 2rem;
+}
+
+.file-preview-list {
+    max-height: 300px;
+    overflow-y: auto;
+    margin-bottom: 1.5rem;
+}
+</style>
+{% endblock %}

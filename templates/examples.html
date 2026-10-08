@@ -1,0 +1,182 @@
+{% extends "base.html" %}
+
+{% block title %}예시 파일 - KUHWA Portal{% endblock %}
+
+{% block content %}
+<div class="examples-container">
+    <div class="section-header">
+        <a href="/" class="back-link">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="15 18 9 12 15 6"></polyline>
+            </svg>
+            돌아가기
+        </a>
+        <h1>예시 파일</h1>
+        <p class="section-subtitle">템플릿, 가이드, 양식 다운로드</p>
+    </div>
+
+    {% if examples %}
+        <div class="file-grid">
+            {% for file in examples %}
+            <div class="file-card">
+                <div class="file-icon">
+                    {% if file.file_type == 'excel' %}
+                        <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14 2 14 8 20 8"></polyline>
+                            <line x1="16" y1="13" x2="8" y2="13"></line>
+                            <line x1="16" y1="17" x2="8" y2="17"></line>
+                        </svg>
+                    {% elif file.file_type == 'pdf' %}
+                        <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14 2 14 8 20 8"></polyline>
+                        </svg>
+                    {% elif file.file_type == 'word' %}
+                        <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14 2 14 8 20 8"></polyline>
+                        </svg>
+                    {% else %}
+                        <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2">
+                            <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path>
+                            <polyline points="13 2 13 9 20 9"></polyline>
+                        </svg>
+                    {% endif %}
+                </div>
+                <div class="file-info">
+                    <span class="file-name">{{ file.original_filename }}</span>
+                    {% if file.description %}
+                        <span class="file-description">{{ file.description }}</span>
+                    {% endif %}
+                    <span class="file-meta">{{ file.file_size|filesizeformat }} · {{ file.download_count }}회 다운로드</span>
+                </div>
+                <a href="/examples/download/{{ file.id }}" class="btn btn-primary btn-small">다운로드</a>
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="empty-state">
+            <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path>
+                <polyline points="13 2 13 9 20 9"></polyline>
+            </svg>
+            <h3>등록된 예시 파일이 없습니다</h3>
+            <p>관리자가 예시 파일을 업로드하면 여기에 표시됩니다.</p>
+        </div>
+    {% endif %}
+</div>
+
+<style>
+.examples-container {
+    max-width: 1000px;
+    margin: 0 auto;
+}
+
+.section-header {
+    margin-bottom: 2rem;
+}
+
+.back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--gray-500);
+    text-decoration: none;
+    margin-bottom: 1rem;
+    font-size: 0.9375rem;
+}
+
+.back-link:hover {
+    color: var(--gray-700);
+}
+
+.section-header h1 {
+    font-size: 1.75rem;
+    margin-bottom: 0.5rem;
+}
+
+.section-subtitle {
+    color: var(--gray-500);
+}
+
+.file-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1rem;
+}
+
+.file-card {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: white;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    transition: all 0.2s;
+}
+
+.file-card:hover {
+    box-shadow: var(--shadow-lg);
+}
+
+.file-icon {
+    flex-shrink: 0;
+}
+
+.file-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    min-width: 0;
+}
+
+.file-name {
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.file-description {
+    font-size: 0.8125rem;
+    color: var(--gray-500);
+}
+
+.file-meta {
+    font-size: 0.75rem;
+    color: var(--gray-400);
+}
+
+.empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    background: white;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    color: var(--gray-400);
+}
+
+.empty-state h3 {
+    margin: 1rem 0 0.5rem;
+    color: var(--gray-700);
+}
+
+.empty-state p {
+    color: var(--gray-500);
+}
+
+@media (max-width: 768px) {
+    .file-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .file-card {
+        flex-direction: column;
+        text-align: center;
+    }
+}
+</style>
+{% endblock %}

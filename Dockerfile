@@ -1,8 +1,9 @@
 FROM python:3.11-slim
 
-# 시스템 의존성 설치 (PDF 처리용 poppler)
+# 시스템 의존성 설치 (PDF 처리용 poppler + qpdf)
 RUN apt-get update && apt-get install -y \
     poppler-utils \
+    qpdf \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app

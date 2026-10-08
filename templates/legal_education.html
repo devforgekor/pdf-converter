@@ -1,0 +1,613 @@
+{% extends "base.html" %}
+
+{% block title %}법정의무교육 - KUHWA Portal{% endblock %}
+
+{% block content %}
+<div class="legal-container">
+    <div class="section-header">
+        <a href="/certificate" class="back-link">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="15 18 9 12 15 6"></polyline>
+            </svg>
+            이수증으로 돌아가기
+        </a>
+        <h1>법정의무교육</h1>
+        <p class="section-subtitle">성희롱예방교육, 장애인인식개선교육, 개인정보보호교육 등</p>
+    </div>
+
+    <div class="education-tabs">
+        <button class="tab-btn active" data-tab="status">이수 현황</button>
+        <button class="tab-btn" data-tab="upload">수료증 관리</button>
+        <button class="tab-btn" data-tab="history">이수 이력</button>
+    </div>
+
+    <div class="tab-content" id="tab-status">
+        <div class="status-grid">
+            <div class="status-card">
+                <div class="status-icon completed">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                        <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                    </svg>
+                </div>
+                <div class="status-info">
+                    <span class="status-label">이수 완료</span>
+                    <span class="status-value" id="completed-count">
+                        {{ educations|selectattr('is_completed')|list|length }}
+                    </span>
+                </div>
+            </div>
+            
+            <div class="status-card">
+                <div class="status-icon pending">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <polyline points="12 6 12 12 16 14"></polyline>
+                    </svg>
+                </div>
+                <div class="status-info">
+                    <span class="status-label">미이수</span>
+                    <span class="status-value" id="pending-count">
+                        {{ educations|rejectattr('is_completed')|list|length }}
+                    </span>
+                </div>
+            </div>
+            
+            <div class="status-card">
+                <div class="status-icon rate">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M18 20V10"></path>
+                        <path d="M12 20V4"></path>
+                        <path d="M6 20v-6"></path>
+                    </svg>
+                </div>
+                <div class="status-info">
+                    <span class="status-label">이수율</span>
+                    <span class="status-value" id="completion-rate">
+                        {% set completed = educations|selectattr('is_completed')|list|length %}
+                        {% set total = educations|length %}
+                        {{ ((completed / total * 100)|round|int) if total > 0 else 0 }}%
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <div class="education-list">
+            <h3>{{ current_year }}년 교육 항목</h3>
+            <div class="list-table">
+                <div class="table-header">
+                    <span class="col-name">교육명</span>
+                    <span class="col-hours">이수시간</span>
+                    <span class="col-date">이수일</span>
+                    <span class="col-status">상태</span>
+                    <span class="col-action">관리</span>
+                </div>
+                
+                {% set edu_types = ['성희롱예방', '장애인인식개선', '개인정보보호', '직장내괴롭힘예방', '예산회계'] %}
+                {% for edu_type in edu_types %}
+                    {% set edu = educations|selectattr('education_type', 'equalto', edu_type)|first %}
+                    <div class="table-row">
+                        <span class="col-name">{{ edu_type }}교육</span>
+                        <span class="col-hours">{{ edu.hours if edu else 1 }}시간</span>
+                        <span class="col-date">
+                            {% if edu and edu.completed_at %}
+                                {{ edu.completed_at.strftime('%Y-%m-%d') }}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </span>
+                        <span class="col-status">
+                            {% if edu and edu.is_completed %}
+                                <span class="status-badge completed">이수완료</span>
+                            {% else %}
+                                <span class="status-badge">미이수</span>
+                            {% endif %}
+                        </span>
+                        <span class="col-action">
+                            {% if edu and edu.conversion_id %}
+                                <a href="/download/{{ edu.conversion_id }}" class="btn btn-small btn-outline">다운로드</a>
+                            {% elif edu and edu.is_completed %}
+                                <form action="/certificate/legal/toggle" method="post" style="display:inline;">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token(request) }}">
+                                    <input type="hidden" name="education_type" value="{{ edu_type }}">
+                                    <input type="hidden" name="year" value="{{ current_year }}">
+                                    <input type="hidden" name="is_completed" value="false">
+                                    <button type="submit" class="btn btn-small btn-outline">취소</button>
+                                </form>
+                            {% else %}
+                                <button class="btn btn-small btn-primary" onclick="showUploadModal('{{ edu_type }}')">등록</button>
+                            {% endif %}
+                        </span>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <div class="tab-content" id="tab-upload" style="display: none;">
+        <div class="upload-section">
+            <div class="upload-card">
+                <h3>수료증 업로드</h3>
+                <p>이수증 PDF를 업로드하면 자동으로 정보를 추출합니다.</p>
+                
+                <form id="legal-upload-form" action="/certificate/legal/upload" method="post" enctype="multipart/form-data">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token(request) }}">
+                    
+                    <div class="form-group">
+                        <label for="education_type">교육 유형</label>
+                        <select id="education_type" name="education_type" required>
+                            <option value="">선택하세요</option>
+                            <option value="성희롱예방">성희롱예방교육</option>
+                            <option value="장애인인식개선">장애인인식개선교육</option>
+                            <option value="개인정보보호">개인정보보호교육</option>
+                            <option value="직장내괴롭힘예방">직장내괴롭힘예방교육</option>
+                            <option value="예산회계">예산회계교육</option>
+                        </select>
+                    </div>
+                    
+                    <div class="upload-zone" id="upload-zone">
+                        <div class="upload-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                <polyline points="17 8 12 3 7 8"></polyline>
+                                <line x1="12" y1="3" x2="12" y2="15"></line>
+                            </svg>
+                        </div>
+                        <p class="upload-text">수료증 PDF를 드래그하세요</p>
+                        <p class="upload-hint">또는 클릭하여 파일 선택</p>
+                        <input type="file" name="file" id="file-input" accept=".pdf" hidden required>
+                    </div>
+                    
+                    <div class="file-info" id="file-info" style="display: none;">
+                        <span class="file-name" id="file-name"></span>
+                        <span class="file-size" id="file-size"></span>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary btn-block" id="upload-btn" disabled>
+                        업로드 및 등록
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="tab-content" id="tab-history" style="display: none;">
+        <div class="history-section">
+            {% if educations %}
+                <div class="list-table">
+                    <div class="table-header">
+                        <span class="col-name">교육명</span>
+                        <span class="col-hours">이수시간</span>
+                        <span class="col-date">이수일</span>
+                        <span class="col-status">상태</span>
+                    </div>
+                    {% for edu in educations %}
+                        <div class="table-row">
+                            <span class="col-name">{{ edu.education_type }}교육</span>
+                            <span class="col-hours">{{ edu.hours }}시간</span>
+                            <span class="col-date">
+                                {% if edu.completed_at %}
+                                    {{ edu.completed_at.strftime('%Y-%m-%d') }}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </span>
+                            <span class="col-status">
+                                {% if edu.is_completed %}
+                                    <span class="status-badge completed">이수완료</span>
+                                {% else %}
+                                    <span class="status-badge">미이수</span>
+                                {% endif %}
+                            </span>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="empty-state">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <polyline points="12 6 12 12 16 14"></polyline>
+                    </svg>
+                    <h3>이수 이력이 없습니다</h3>
+                    <p>수료증을 업로드하면 이력이 여기에 표시됩니다.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+.legal-container {
+    max-width: 1000px;
+    margin: 0 auto;
+}
+
+.section-header {
+    margin-bottom: 2rem;
+}
+
+.back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--gray-500);
+    text-decoration: none;
+    margin-bottom: 1rem;
+    font-size: 0.9375rem;
+}
+
+.back-link:hover {
+    color: var(--gray-700);
+}
+
+.section-header h1 {
+    font-size: 1.75rem;
+    margin-bottom: 0.5rem;
+}
+
+.section-subtitle {
+    color: var(--gray-500);
+}
+
+.education-tabs {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 2rem;
+    border-bottom: 1px solid var(--gray-200);
+    padding-bottom: 0.5rem;
+}
+
+.tab-btn {
+    padding: 0.75rem 1.5rem;
+    border: none;
+    background: none;
+    cursor: pointer;
+    font-size: 1rem;
+    color: var(--gray-500);
+    border-radius: var(--radius) var(--radius) 0 0;
+    transition: all 0.2s;
+}
+
+.tab-btn:hover {
+    color: var(--gray-700);
+    background: var(--gray-50);
+}
+
+.tab-btn.active {
+    color: var(--primary);
+    background: white;
+    border-bottom: 2px solid var(--primary);
+}
+
+.status-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.status-card {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.5rem;
+    background: white;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+}
+
+.status-icon {
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+}
+
+.status-icon.completed { background: #d1fae5; color: #10b981; }
+.status-icon.pending { background: #fef3c7; color: #f59e0b; }
+.status-icon.rate { background: #dbeafe; color: #3b82f6; }
+
+.status-label {
+    display: block;
+    font-size: 0.875rem;
+    color: var(--gray-500);
+}
+
+.status-value {
+    display: block;
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--gray-900);
+}
+
+.education-list {
+    background: white;
+    padding: 1.5rem;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+}
+
+.education-list h3 {
+    margin-bottom: 1rem;
+    font-size: 1.125rem;
+}
+
+.list-table {
+    overflow-x: auto;
+}
+
+.table-header,
+.table-row {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1fr 1fr;
+    gap: 1rem;
+    padding: 0.75rem;
+    align-items: center;
+}
+
+.table-header {
+    background: var(--gray-50);
+    font-weight: 600;
+    font-size: 0.875rem;
+    color: var(--gray-700);
+    border-radius: var(--radius);
+}
+
+.table-row {
+    border-bottom: 1px solid var(--gray-100);
+}
+
+.table-row:last-child {
+    border-bottom: none;
+}
+
+.col-name {
+    font-weight: 500;
+}
+
+.col-hours,
+.col-date {
+    color: var(--gray-500);
+    font-size: 0.9375rem;
+}
+
+.upload-section {
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.upload-card {
+    background: white;
+    padding: 2rem;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+}
+
+.upload-card h3 {
+    margin-bottom: 0.5rem;
+}
+
+.upload-card > p {
+    color: var(--gray-500);
+    margin-bottom: 1.5rem;
+}
+
+.upload-zone {
+    border: 2px dashed var(--gray-300);
+    border-radius: var(--radius);
+    padding: 2rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-bottom: 1.5rem;
+}
+
+.upload-zone:hover {
+    border-color: var(--primary);
+    background: rgba(59, 130, 246, 0.05);
+}
+
+.upload-icon {
+    color: var(--gray-400);
+    margin-bottom: 1rem;
+}
+
+.upload-text {
+    font-size: 1rem;
+    color: var(--gray-700);
+    margin-bottom: 0.5rem;
+}
+
+.upload-hint {
+    color: var(--gray-500);
+    font-size: 0.875rem;
+}
+
+.file-info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: var(--gray-50);
+    border-radius: var(--radius);
+    margin-bottom: 1.5rem;
+}
+
+.file-name {
+    flex: 1;
+    font-weight: 500;
+}
+
+.file-size {
+    color: var(--gray-500);
+}
+
+.history-section {
+    background: white;
+    padding: 2rem;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+}
+
+.empty-state {
+    text-align: center;
+    padding: 3rem;
+    color: var(--gray-400);
+}
+
+.empty-state h3 {
+    margin: 1rem 0 0.5rem;
+    color: var(--gray-700);
+}
+
+.empty-state p {
+    color: var(--gray-500);
+}
+
+@media (max-width: 768px) {
+    .status-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .education-tabs {
+        flex-wrap: wrap;
+    }
+    
+    .tab-btn {
+        flex: 1;
+        min-width: 100px;
+        text-align: center;
+    }
+    
+    .table-header,
+    .table-row {
+        grid-template-columns: 1fr 1fr;
+        gap: 0.5rem;
+    }
+    
+    .col-name {
+        grid-column: span 2;
+    }
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // 탭 전환
+    const tabBtns = document.querySelectorAll('.tab-btn');
+    const tabContents = document.querySelectorAll('.tab-content');
+    
+    tabBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const tabId = btn.dataset.tab;
+            
+            tabBtns.forEach(b => b.classList.remove('active'));
+            tabContents.forEach(c => c.style.display = 'none');
+            
+            btn.classList.add('active');
+            document.getElementById('tab-' + tabId).style.display = 'block';
+        });
+    });
+    
+    // 업로드 폼 처리
+    const uploadForm = document.getElementById('legal-upload-form');
+    const uploadZone = document.getElementById('upload-zone');
+    const fileInput = document.getElementById('file-input');
+    const fileInfo = document.getElementById('file-info');
+    const uploadBtn = document.getElementById('upload-btn');
+    
+    if (uploadForm) {
+        uploadForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            if (!fileInput.files.length) {
+                alert('파일을 선택해주세요.');
+                return;
+            }
+            const formData = new FormData(uploadForm);
+            uploadBtn.disabled = true;
+            uploadBtn.textContent = '업로드 중...';
+            
+            fetch('/certificate/legal/upload', {
+                method: 'POST',
+                body: formData
+            }).then(response => {
+                if (response.redirected) {
+                    window.location.href = response.url;
+                } else if (response.ok) {
+                    window.location.reload();
+                } else {
+                    return response.json().then(data => {
+                        throw new Error(data.detail || '업로드 실패');
+                    });
+                }
+            }).catch(err => {
+                alert('업로드 중 오류가 발생했습니다: ' + err.message);
+                uploadBtn.disabled = false;
+                uploadBtn.textContent = '업로드 및 등록';
+            });
+        });
+    }
+    
+    if (uploadZone) {
+        uploadZone.addEventListener('click', () => fileInput.click());
+        
+        uploadZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadZone.classList.add('dragover');
+        });
+        
+        uploadZone.addEventListener('dragleave', () => {
+            uploadZone.classList.remove('dragover');
+        });
+        
+        uploadZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadZone.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length) {
+                fileInput.files = files;
+                updateFileInfo(files[0]);
+            }
+        });
+        
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length) {
+                updateFileInfo(e.target.files[0]);
+            }
+        });
+    }
+    
+    function updateFileInfo(file) {
+        document.getElementById('file-name').textContent = file.name;
+        document.getElementById('file-size').textContent = formatFileSize(file.size);
+        fileInfo.style.display = 'flex';
+        uploadBtn.disabled = false;
+    }
+    
+    function formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+});
+
+function showUploadModal(educationType) {
+    const select = document.getElementById('education_type');
+    if (select) {
+        select.value = educationType;
+    }
+    
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(c => c.style.display = 'none');
+    
+    document.querySelector('[data-tab="upload"]').classList.add('active');
+    document.getElementById('tab-upload').style.display = 'block';
+}
+</script>
+{% endblock %}

@@ -1,3 +1,10 @@
+"""
+Excel 내보내기 모듈
+
+참조 소스:
+- pdfplumber + pandas + openpyxl 스택: https://github.com/jsvine/pdfplumber
+- ExcelExporter 패턴: pd.ExcelWriter 컨텍스트 매니저 + 열 너비 자동 조정
+"""
 import pandas as pd
 from typing import Union
 from openpyxl.utils import get_column_letter
@@ -22,10 +29,8 @@ class ExcelExporter:
             # 워크시트 너비 자동 조정
             worksheet = writer.sheets['Sheet1']
             for idx, col in enumerate(df.columns):
-                max_length = max(
-                    df[col].astype(str).map(len).max(),
-                    len(str(col))
-                )
+                col_max = df[col].astype(str).map(len).max() if len(df) > 0 else 0
+                max_length = max(col_max, len(str(col)))
                 # get_column_letter를 사용하여 26개 초과 컬럼 처리 (AA, AB 등)
                 column_letter = get_column_letter(idx + 1)
                 worksheet.column_dimensions[column_letter].width = min(max_length + 2, 50)

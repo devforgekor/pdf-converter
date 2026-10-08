@@ -2,7 +2,10 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+    <meta name="theme-color" content="#3b82f6">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <title>{% block title %}PDF to Spreadsheet{% endblock %}</title>
     <link rel="stylesheet" href="/static/css/style.css">
     {% block extra_css %}{% endblock %}
@@ -10,19 +13,20 @@
 <body>
     <nav class="navbar">
         <div class="nav-brand">
-            <a href="/">PDF2Sheet</a>
+            <a href="/">KUHWA</a>
         </div>
         <div class="nav-menu">
-            {% if user %}
-                <a href="/" class="nav-link">업로드</a>
-                <a href="/history" class="nav-link">이력</a>
-                <span class="nav-user">{{ user.username }}</span>
+            {% if request.session.get("pin_authenticated") %}
+                <a href="/schedule" class="nav-link">학사일정</a>
+                <a href="/certificate" class="nav-link">이수증</a>
+                <a href="/timetable" class="nav-link">시간표</a>
+                <a href="/records" class="nav-link">학적</a>
+                <a href="/examples" class="nav-link">예시 파일</a>
                 <form action="/logout" method="post" class="nav-form">
-                    <button type="submit" class="btn btn-outline">로그아웃</button>
+                    <button type="submit" class="btn btn-outline btn-small">로그아웃</button>
                 </form>
             {% else %}
                 <a href="/login" class="nav-link">로그인</a>
-                <a href="/register" class="nav-link">회원가입</a>
             {% endif %}
         </div>
     </nav>

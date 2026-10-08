@@ -1,3 +1,10 @@
+"""
+Flash 메시지 유틸리티
+
+참조 소스:
+- Flask flash() 패턴을 FastAPI/Starlette 세션으로 포팅
+- Flask 공식 문서: https://flask.palletsprojects.com/en/3.0.x/patterns/flashing/
+"""
 import typing
 from fastapi import Request
 

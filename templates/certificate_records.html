@@ -1,0 +1,228 @@
+{% extends "base.html" %}
+
+{% block title %}이수증 기록 - KUHWA Portal{% endblock %}
+
+{% block content %}
+<div class="records-container">
+    <div class="section-header">
+        <a href="/" class="back-link">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="15 18 9 12 15 6"></polyline>
+            </svg>
+            돌아가기
+        </a>
+        <h1>이수증 기록</h1>
+        <p class="section-subtitle">파싱된 이수증 데이터 관리</p>
+        <div class="header-actions">
+            <a href="/certificate/auto-parse" class="btn btn-primary">자동 파싱</a>
+            {% if records %}
+            <form action="/certificate/export" method="POST" class="export-form" style="display: inline;">
+                <input type="hidden" name="template_id" value="{{ records[0].template_id if records else '' }}">
+                <input type="hidden" name="record_ids" value="{{ records|map(attribute='id')|join(',') if records else '' }}">
+                <button type="submit" class="btn btn-success">Excel 내보내기</button>
+            </form>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if records %}
+        <div class="records-table-wrapper">
+            <table class="records-table">
+                <thead>
+                    <tr>
+                        <th>성명</th>
+                        <th>과정명</th>
+                        <th>시간</th>
+                        <th>이수번호</th>
+                        <th>인증코드</th>
+                        <th>상태</th>
+                        <th>등록일</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for r in records %}
+                        <tr>
+                            <td class="name-cell">{{ r.holder_name or '-' }}</td>
+                            <td>{{ r.course_name or '-' }}</td>
+                            <td>{{ r.hours or '-' }}</td>
+                            <td>{{ r.certificate_number or '-' }}</td>
+                            <td class="code-cell">{{ r.verification_code or '-' }}</td>
+                            <td>
+                                {% if r.status == 'verified' %}
+                                    <span class="status-badge success">인증됨</span>
+                                {% elif r.status == 'exported' %}
+                                    <span class="status-badge warning">내보내기</span>
+                                {% else %}
+                                    <span class="status-badge">파싱됨</span>
+                                {% endif %}
+                            </td>
+                            <td class="date-cell">{{ r.created_at.strftime('%Y-%m-%d') }}</td>
+                            <td>
+                                <a href="/certificate/records/{{ r.id }}" class="btn btn-outline btn-small">상세</a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div class="empty-state">
+            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+            </svg>
+            <h3>등록된 기록이 없습니다</h3>
+            <p>이수증을 업로드하여 파싱 기록을 생성하세요.</p>
+        </div>
+    {% endif %}
+</div>
+
+<style>
+.records-container {
+    max-width: 1100px;
+    margin: 0 auto;
+}
+
+.section-header {
+    margin-bottom: 2rem;
+}
+
+.back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--gray-500);
+    text-decoration: none;
+    margin-bottom: 1rem;
+    font-size: 0.9375rem;
+}
+
+.back-link:hover {
+    color: var(--gray-700);
+}
+
+.section-header h1 {
+    font-size: 1.75rem;
+    margin-bottom: 0.5rem;
+}
+
+.section-subtitle {
+    color: var(--gray-500);
+}
+
+.records-table-wrapper {
+    background: white;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    overflow-x: auto;
+}
+
+.records-table {
+    width: 100%;
+    border-collapse: collapse;
+    white-space: nowrap;
+}
+
+.records-table th,
+.records-table td {
+    padding: 0.875rem 1rem;
+    text-align: left;
+    border-bottom: 1px solid var(--gray-200);
+}
+
+.records-table th {
+    background: var(--gray-50);
+    font-weight: 600;
+    color: var(--gray-700);
+    font-size: 0.8125rem;
+}
+
+.records-table tbody tr:hover {
+    background: var(--gray-50);
+}
+
+.name-cell {
+    font-weight: 500;
+}
+
+.code-cell {
+    font-family: monospace;
+    font-size: 0.8125rem;
+    color: var(--gray-500);
+}
+
+.date-cell {
+    font-size: 0.8125rem;
+    color: var(--gray-500);
+}
+
+.empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    background: white;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    color: var(--gray-400);
+}
+
+.empty-state h3 {
+    margin: 1rem 0 0.5rem;
+    color: var(--gray-700);
+}
+
+.empty-state p {
+    color: var(--gray-500);
+}
+
+.header-actions {
+    display: flex;
+    gap: 0.75rem;
+    margin-top: 1rem;
+}
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.625rem 1.25rem;
+    border-radius: var(--radius);
+    font-weight: 500;
+    text-decoration: none;
+    cursor: pointer;
+    border: none;
+    font-size: 0.9375rem;
+    transition: all 0.2s;
+}
+
+.btn-primary {
+    background: #3b82f6;
+    color: white;
+}
+
+.btn-primary:hover {
+    background: #2563eb;
+}
+
+.btn-success {
+    background: #10b981;
+    color: white;
+}
+
+.btn-success:hover {
+    background: #059669;
+}
+
+@media (max-width: 768px) {
+    .records-table {
+        font-size: 0.8125rem;
+        white-space: normal;
+    }
+
+    .records-table th,
+    .records-table td {
+        padding: 0.625rem 0.5rem;
+    }
+}
+</style>
+{% endblock %}

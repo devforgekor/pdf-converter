@@ -20,14 +20,26 @@
                     </svg>
                 </div>
                 <p class="upload-text">파일을 여기에 드래그하세요</p>
-                <p class="upload-hint">또는 클릭하여 파일 선택</p>
-                <input type="file" name="file" id="file-input" accept=".pdf" hidden required>
+                <p class="upload-hint">또는 클릭하여 파일 선택 (여러 파일 선택 가능)</p>
+                <input type="file" name="files" id="file-input" accept=".pdf" multiple hidden required>
             </div>
             
             <div class="file-info" id="file-info" style="display: none;">
-                <span class="file-name" id="file-name"></span>
-                <span class="file-size" id="file-size"></span>
-                <button type="button" class="btn btn-small btn-danger" id="remove-file">제거</button>
+                <div class="file-list" id="file-list"></div>
+                <div class="file-summary" id="file-summary"></div>
+            </div>
+            
+            <div class="upload-options">
+                <div class="option-item">
+                    <input type="radio" name="upload_mode" id="mode-single" value="single" checked>
+                    <label for="mode-single">개별 변환</label>
+                    <span class="option-desc">각 파일을 개별적으로 변환합니다</span>
+                </div>
+                <div class="option-item">
+                    <input type="radio" name="upload_mode" id="mode-batch" value="batch">
+                    <label for="mode-batch">배치 변환</label>
+                    <span class="option-desc">모든 파일을 하나의 배치로 변환합니다</span>
+                </div>
             </div>
             
             <button type="submit" class="btn btn-primary btn-block" id="upload-btn" disabled>

@@ -1,0 +1,276 @@
+{% extends "base.html" %}
+
+{% block title %}템플릿 관리 - KUHWA Portal{% endblock %}
+
+{% block content %}
+<div class="admin-container">
+    <div class="admin-header">
+        <h1>이수증 템플릿 관리</h1>
+        <p class="admin-subtitle">파싱 패턴 및 연결 양식 관리</p>
+        <a href="/certificate/auto-parse" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 inline-block mt-2">자동 파싱</a>
+    </div>
+
+    <div class="create-section">
+        <div class="section-header">
+            <h2>템플릿 생성</h2>
+        </div>
+        <form action="/admin/templates/create" method="post" class="template-form">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token(request) }}">
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="name">템플릿명</label>
+                    <input type="text" id="name" name="name" required placeholder="예: 학교안전교육 이수증">
+                </div>
+                <div class="form-group">
+                    <label for="issuer">발급기관</label>
+                    <input type="text" id="issuer" name="issuer" placeholder="예: 서울특별시교육청">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="description">설명</label>
+                <input type="text" id="description" name="description" placeholder="템플릿 설명 (선택)">
+            </div>
+
+            <div class="form-group">
+                <label for="parsing_patterns">파싱 패턴 (JSON)</label>
+                <textarea id="parsing_patterns" name="parsing_patterns" rows="4" placeholder='{"성명": "성명\\s*:\\s*(.+)", "생년월일": "생년월일\\s*:\\s*(.+)"}'></textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="field_mapping">필드 매핑 (JSON)</label>
+                <textarea id="field_mapping" name="field_mapping" rows="3" placeholder='{"성명": "D", "생년월일": "E", "이수시간": "J"}'></textarea>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="linked_form_id">연결 양식</label>
+                    <select id="linked_form_id" name="linked_form_id">
+                        <option value="0">선택 안함</option>
+                        {% for ex in examples %}
+                            <option value="{{ ex.id }}">{{ ex.original_filename }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="output_sheet_name">출력 시트명</label>
+                    <input type="text" id="output_sheet_name" name="output_sheet_name" placeholder="Sheet1">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="output_start_row">데이터 시작 행</label>
+                <input type="number" id="output_start_row" name="output_start_row" value="2" min="1">
+            </div>
+
+            <button type="submit" class="btn btn-primary">템플릿 생성</button>
+        </form>
+    </div>
+
+    <div class="list-section">
+        <div class="section-header">
+            <h2>템플릿 목록</h2>
+            <span class="count-badge">{{ templates|length }}개</span>
+        </div>
+
+        {% if templates %}
+            <div class="template-list">
+                {% for t in templates %}
+                    <div class="template-item">
+                        <div class="template-info">
+                            <span class="template-name">{{ t.name }}</span>
+                            {% if t.issuer %}
+                                <span class="template-meta">{{ t.issuer }}</span>
+                            {% endif %}
+                            {% if t.linked_form_original_name %}
+                                <span class="template-form">양식: {{ t.linked_form_original_name }}</span>
+                            {% endif %}
+                            <span class="template-date">{{ t.created_at.strftime('%Y-%m-%d') }}</span>
+                        </div>
+                        <div class="template-actions">
+                            <a href="/admin/templates/{{ t.id }}/edit" class="btn btn-outline btn-small">수정</a>
+                            <form action="/admin/templates/{{ t.id }}/delete" method="post" style="display:inline;">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token(request) }}">
+                                <button type="submit" class="btn btn-danger btn-small" onclick="return confirm('정말 삭제하시겠습니까?')">삭제</button>
+                            </form>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="empty-state">
+                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                    <polyline points="14 2 14 8 20 8"></polyline>
+                </svg>
+                <h3>등록된 템플릿이 없습니다</h3>
+                <p>위 양식을 사용하여 새 템플릿을 생성하세요.</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+.admin-container {
+    max-width: 1000px;
+    margin: 0 auto;
+}
+
+.admin-header {
+    margin-bottom: 2rem;
+}
+
+.admin-header h1 {
+    font-size: 1.75rem;
+    margin-bottom: 0.5rem;
+}
+
+.admin-subtitle {
+    color: var(--gray-500);
+}
+
+.create-section {
+    background: white;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.create-section .section-header {
+    margin-bottom: 1.25rem;
+}
+
+.create-section .section-header h2 {
+    font-size: 1.125rem;
+}
+
+.template-form textarea {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--gray-300);
+    border-radius: var(--radius);
+    font-size: 0.875rem;
+    font-family: monospace;
+    resize: vertical;
+    transition: border-color 0.2s;
+}
+
+.template-form textarea:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.list-section {
+    background: white;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 1.5rem;
+}
+
+.list-section .section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.list-section .section-header h2 {
+    font-size: 1.125rem;
+}
+
+.count-badge {
+    background: var(--gray-100);
+    color: var(--gray-700);
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.8125rem;
+}
+
+.template-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.template-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    background: var(--gray-50);
+    border-radius: var(--radius);
+}
+
+.template-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.template-name {
+    font-weight: 500;
+}
+
+.template-meta {
+    font-size: 0.8125rem;
+    color: var(--gray-500);
+}
+
+.template-form {
+    font-size: 0.75rem;
+    color: var(--gray-400);
+}
+
+.template-date {
+    font-size: 0.75rem;
+    color: var(--gray-400);
+}
+
+.template-actions {
+    display: flex;
+    gap: 0.5rem;
+    flex-shrink: 0;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 3rem 2rem;
+    color: var(--gray-400);
+}
+
+.empty-state h3 {
+    margin: 1rem 0 0.5rem;
+    color: var(--gray-700);
+}
+
+.empty-state p {
+    color: var(--gray-500);
+}
+
+@media (max-width: 768px) {
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+
+    .template-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.75rem;
+    }
+
+    .template-actions {
+        width: 100%;
+        justify-content: flex-end;
+    }
+}
+</style>
+{% endblock %}

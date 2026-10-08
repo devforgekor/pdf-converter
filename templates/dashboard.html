@@ -1,0 +1,304 @@
+{% extends "base.html" %}
+
+{% block title %}메인 - KUHWA Portal{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <div class="dashboard-header">
+        <h1>KUHWA Portal</h1>
+        <p class="dashboard-subtitle">업무 관리 시스템</p>
+    </div>
+
+    <div class="dashboard-grid">
+        <!-- 학사일정 -->
+        <a href="/schedule" class="dashboard-card card-schedule">
+            <div class="card-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                    <line x1="16" y1="2" x2="16" y2="6"></line>
+                    <line x1="8" y1="2" x2="8" y2="6"></line>
+                    <line x1="3" y1="10" x2="21" y2="10"></line>
+                </svg>
+            </div>
+            <div class="card-content">
+                <h2>학사일정</h2>
+                <p>학사 일정 및 주요 행사 관리</p>
+                <span class="card-badge">준비 중</span>
+            </div>
+        </a>
+
+        <!-- 이수증 -->
+        <a href="/certificate" class="dashboard-card card-certificate">
+            <div class="card-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="8" r="7"></circle>
+                    <polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"></polyline>
+                </svg>
+            </div>
+            <div class="card-content">
+                <h2>이수증</h2>
+                <p>법정의무교육 및 안전교육 이수 관리</p>
+                <div class="card-links">
+                    <span class="card-link">법정의무교육</span>
+                    <span class="card-link">안전교육</span>
+                </div>
+            </div>
+        </a>
+
+        <!-- 시간표 -->
+        <a href="/timetable" class="dashboard-card card-timetable">
+            <div class="card-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <polyline points="12 6 12 12 16 14"></polyline>
+                </svg>
+            </div>
+            <div class="card-content">
+                <h2>시간표</h2>
+                <p>주간 시간표 및 수업 일정 관리</p>
+                <span class="card-badge">준비 중</span>
+            </div>
+        </a>
+
+        <!-- 학적 -->
+        <a href="/records" class="dashboard-card card-records">
+            <div class="card-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                    <polyline points="14 2 14 8 20 8"></polyline>
+                    <line x1="16" y1="13" x2="8" y2="13"></line>
+                    <line x1="16" y1="17" x2="8" y2="17"></line>
+                    <polyline points="10 9 9 9 8 9"></polyline>
+                </svg>
+            </div>
+            <div class="card-content">
+                <h2>학적</h2>
+                <p>학생 학적 정보 관리</p>
+                <span class="card-badge">준비 중</span>
+            </div>
+        </a>
+    </div>
+
+    {% if recent_conversions %}
+    <div class="recent-section">
+        <h2>최근 변환 이력</h2>
+        <div class="recent-list">
+            {% for conv in recent_conversions %}
+            <div class="recent-item">
+                <div class="recent-info">
+                    <span class="recent-filename">{{ conv.original_filename }}</span>
+                    <span class="recent-date">{{ conv.created_at.strftime('%Y-%m-%d %H:%M') }}</span>
+                </div>
+                <div class="recent-status">
+                    {% if conv.status == 'completed' %}
+                        <span class="status-badge success">완료</span>
+                        <a href="/download/{{ conv.id }}" class="btn btn-small">다운로드</a>
+                    {% elif conv.status == 'processing' %}
+                        <span class="status-badge warning">변환 중</span>
+                    {% elif conv.status == 'failed' %}
+                        <span class="status-badge danger">실패</span>
+                    {% else %}
+                        <span class="status-badge">대기</span>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+.dashboard-container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.dashboard-header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.dashboard-header h1 {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+    color: var(--gray-900);
+}
+
+.dashboard-subtitle {
+    color: var(--gray-500);
+    font-size: 1.125rem;
+}
+
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.dashboard-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 1.5rem;
+    padding: 2rem;
+    background: white;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    text-decoration: none;
+    color: inherit;
+    transition: all 0.2s;
+    border: 2px solid transparent;
+}
+
+.dashboard-card:hover {
+    box-shadow: var(--shadow-lg);
+    transform: translateY(-2px);
+}
+
+.card-schedule:hover { border-color: #3b82f6; }
+.card-certificate:hover { border-color: #10b981; }
+.card-timetable:hover { border-color: #f59e0b; }
+.card-records:hover { border-color: #8b5cf6; }
+
+.card-icon {
+    flex-shrink: 0;
+    width: 80px;
+    height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+}
+
+.card-schedule .card-icon { background: #eff6ff; color: #3b82f6; }
+.card-certificate .card-icon { background: #ecfdf5; color: #10b981; }
+.card-timetable .card-icon { background: #fffbeb; color: #f59e0b; }
+.card-records .card-icon { background: #f5f3ff; color: #8b5cf6; }
+
+.card-content h2 {
+    font-size: 1.25rem;
+    margin-bottom: 0.5rem;
+    color: var(--gray-900);
+}
+
+.card-content p {
+    color: var(--gray-500);
+    font-size: 0.9375rem;
+    margin-bottom: 0.75rem;
+}
+
+.card-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.card-link {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    background: var(--gray-100);
+    border-radius: 9999px;
+    font-size: 0.8125rem;
+    color: var(--gray-700);
+}
+
+.card-badge {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    background: var(--gray-100);
+    border-radius: 9999px;
+    font-size: 0.8125rem;
+    color: var(--gray-500);
+}
+
+.recent-section {
+    background: white;
+    padding: 2rem;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+}
+
+.recent-section h2 {
+    margin-bottom: 1rem;
+    font-size: 1.25rem;
+}
+
+.recent-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.recent-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    background: var(--gray-50);
+    border-radius: var(--radius);
+}
+
+.recent-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.recent-filename {
+    font-weight: 500;
+}
+
+.recent-date {
+    font-size: 0.875rem;
+    color: var(--gray-500);
+}
+
+.recent-status {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+@media (max-width: 768px) {
+    .dashboard-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .dashboard-card {
+        flex-direction: column;
+        text-align: center;
+        align-items: center;
+    }
+    
+    .card-icon {
+        width: 64px;
+        height: 64px;
+    }
+    
+    .card-icon svg {
+        width: 36px;
+        height: 36px;
+    }
+    
+    .card-links {
+        justify-content: center;
+    }
+    
+    .dashboard-header h1 {
+        font-size: 1.5rem;
+    }
+    
+    .recent-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.75rem;
+    }
+    
+    .recent-status {
+        width: 100%;
+        justify-content: space-between;
+    }
+}
+</style>
+{% endblock %}

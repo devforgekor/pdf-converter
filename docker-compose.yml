@@ -9,7 +9,7 @@ services:
       - ./uploads:/app/uploads
       - ./output:/app/output
       - ./instance:/app/instance
-    environment:
-      - SECRET_KEY=${SECRET_KEY:-your-secret-key-change-in-production}
-      - DATABASE_URL=sqlite:///./instance/app.db
+      - /home/ubuntu/.oci:/home/ubuntu/.oci:ro
+    env_file:
+      - .env
     restart: unless-stopped

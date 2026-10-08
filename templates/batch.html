@@ -1,0 +1,313 @@
+{% extends "base.html" %}
+
+{% block title %}배치 처리 - PDF2Sheet{% endblock %}
+
+{% block content %}
+<div class="batch-container">
+    <div class="batch-card">
+        <h1 class="batch-title">배치 처리</h1>
+        <p class="batch-subtitle">여러 PDF 파일을 동시에 변환하세요</p>
+        
+        <form action="/batch/upload" method="post" enctype="multipart/form-data" id="batch-form">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token(request) }}">
+            
+            <div class="upload-zone" id="upload-zone">
+                <div class="upload-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="17 8 12 3 7 8"></polyline>
+                        <line x1="12" y1="3" x2="12" y2="15"></line>
+                    </svg>
+                </div>
+                <p class="upload-text">여러 파일을 드래그하세요</p>
+                <p class="upload-hint">또는 클릭하여 파일 선택 (최대 10개)</p>
+                <input type="file" name="files" id="file-input" accept=".pdf" multiple hidden required>
+            </div>
+            
+            <div class="file-list" id="file-list">
+                <!-- 선택된 파일들이 여기에 표시됩니다 -->
+            </div>
+            
+            <button type="submit" class="btn btn-primary btn-block" id="upload-btn" disabled>
+                파일 업로드 및 변환 설정
+            </button>
+        </form>
+    </div>
+    
+    <div class="batch-info">
+        <div class="info-card">
+            <div class="info-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="16" x2="12" y2="12"></line>
+                    <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                </svg>
+            </div>
+            <div class="info-content">
+                <h3>최대 10개 파일</h3>
+                <p>한 번에 최대 10개의 PDF 파일을 업로드할 수 있습니다.</p>
+            </div>
+        </div>
+        
+        <div class="info-card">
+            <div class="info-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+                </svg>
+            </div>
+            <div class="info-content">
+                <h3>병렬 처리</h3>
+                <p>파일들은 동시 병렬 처리되어 빠르게 변환됩니다.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.batch-container {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.batch-card {
+    background: white;
+    padding: 2.5rem;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-lg);
+    margin-bottom: 2rem;
+}
+
+.batch-title {
+    text-align: center;
+    margin-bottom: 0.5rem;
+}
+
+.batch-subtitle {
+    text-align: center;
+    color: var(--gray-500);
+    margin-bottom: 2rem;
+}
+
+.upload-zone {
+    border: 2px dashed var(--gray-300);
+    border-radius: var(--radius);
+    padding: 3rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-bottom: 1.5rem;
+}
+
+.upload-zone:hover,
+.upload-zone.dragover {
+    border-color: var(--primary);
+    background: rgba(59, 130, 246, 0.05);
+}
+
+.upload-icon {
+    color: var(--gray-400);
+    margin-bottom: 1rem;
+}
+
+.upload-text {
+    font-size: 1.125rem;
+    color: var(--gray-700);
+    margin-bottom: 0.5rem;
+}
+
+.upload-hint {
+    color: var(--gray-500);
+    font-size: 0.875rem;
+}
+
+.file-list {
+    max-height: 300px;
+    overflow-y: auto;
+    margin-bottom: 1.5rem;
+}
+
+.file-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.75rem;
+    background: var(--gray-50);
+    border-radius: var(--radius);
+    margin-bottom: 0.5rem;
+}
+
+.file-item .file-name {
+    flex: 1;
+    font-weight: 500;
+    word-break: break-all;
+}
+
+.file-item .file-size {
+    color: var(--gray-500);
+    font-size: 0.875rem;
+}
+
+.file-item .remove-btn {
+    background: none;
+    border: none;
+    color: var(--danger);
+    cursor: pointer;
+    padding: 0.25rem;
+}
+
+.batch-info {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1rem;
+}
+
+.info-card {
+    background: white;
+    padding: 1.5rem;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    display: flex;
+    gap: 1rem;
+}
+
+.info-icon {
+    color: var(--primary);
+}
+
+.info-content h3 {
+    margin-bottom: 0.25rem;
+    font-size: 1rem;
+}
+
+.info-content p {
+    color: var(--gray-500);
+    font-size: 0.875rem;
+}
+
+@media (max-width: 768px) {
+    .batch-card {
+        padding: 1.5rem;
+    }
+    
+    .upload-zone {
+        padding: 2rem;
+    }
+    
+    .batch-info {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const uploadZone = document.getElementById('upload-zone');
+    const fileInput = document.getElementById('file-input');
+    const fileList = document.getElementById('file-list');
+    const uploadBtn = document.getElementById('upload-btn');
+    const form = document.getElementById('batch-form');
+    
+    let selectedFiles = [];
+    
+    // 드래그 앤 드롭
+    uploadZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        uploadZone.classList.add('dragover');
+    });
+    
+    uploadZone.addEventListener('dragleave', () => {
+        uploadZone.classList.remove('dragover');
+    });
+    
+    uploadZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        uploadZone.classList.remove('dragover');
+        
+        const files = Array.from(e.dataTransfer.files).filter(f => f.name.endsWith('.pdf'));
+        addFiles(files);
+    });
+    
+    // 클릭 업로드
+    uploadZone.addEventListener('click', () => {
+        fileInput.click();
+    });
+    
+    fileInput.addEventListener('change', (e) => {
+        const files = Array.from(e.target.files);
+        addFiles(files);
+    });
+    
+    function addFiles(files) {
+        // 최대 10개 파일 제한
+        const remaining = 10 - selectedFiles.length;
+        const filesToAdd = files.slice(0, remaining);
+        
+        selectedFiles = [...selectedFiles, ...filesToAdd];
+        updateFileList();
+        updateUploadButton();
+    }
+    
+    function updateFileList() {
+        fileList.innerHTML = selectedFiles.map((file, index) => `
+            <div class="file-item">
+                <span class="file-name">${file.name}</span>
+                <span class="file-size">${formatFileSize(file.size)}</span>
+                <button type="button" class="remove-btn" onclick="removeFile(${index})">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+        `).join('');
+    }
+    
+    function updateUploadButton() {
+        uploadBtn.disabled = selectedFiles.length === 0;
+        uploadBtn.textContent = selectedFiles.length > 0 
+            ? `${selectedFiles.length}개 파일 업로드 및 변환 설정`
+            : '파일을 선택하세요';
+    }
+    
+    window.removeFile = function(index) {
+        selectedFiles.splice(index, 1);
+        updateFileList();
+        updateUploadButton();
+    };
+    
+    function formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+    
+    // 폼 제출 시 파일 데이터 포함
+    form.addEventListener('submit', function(e) {
+        // FormData에 파일 추가
+        const formData = new FormData();
+        const csrfToken = form.querySelector('input[name="csrf_token"]').value;
+        formData.append('csrf_token', csrfToken);
+        
+        selectedFiles.forEach(file => {
+            formData.append('files', file);
+        });
+        
+        // 기존 폼 데이터로 교체
+        e.preventDefault();
+        
+        fetch('/batch/upload', {
+            method: 'POST',
+            body: formData
+        }).then(response => {
+            if (response.redirected) {
+                window.location.href = response.url;
+            }
+        });
+    });
+});
+</script>
+{% endblock %}
