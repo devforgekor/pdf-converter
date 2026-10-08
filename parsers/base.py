@@ -1,6 +1,7 @@
 """BaseParser - 모든 파서의 추상 기반 클래스"""
 from abc import ABC, abstractmethod
 from typing import List, Optional
+import pdfplumber
 from .ir import DocumentIR
 
 
@@ -31,6 +32,27 @@ class BaseParser(ABC):
     
     def __init__(self):
         pass
+    
+    def extract_text(self, file_path: str) -> str:
+        """PDF에서 텍스트 추출"""
+        text = ""
+        with pdfplumber.open(file_path) as pdf:
+            for page in pdf.pages:
+                text += page.extract_text() or ""
+        return text
+    
+    def extract_tables(self, file_path: str) -> List[List[List[str]]]:
+        """PDF에서 테이블 추출"""
+        tables = []
+        with pdfplumber.open(file_path) as pdf:
+            for page in pdf.pages:
+                tables.extend(page.extract_tables())
+        return tables
+    
+    def get_page_count(self, file_path: str) -> int:
+        """PDF 페이지 수 반환"""
+        with pdfplumber.open(file_path) as pdf:
+            return len(pdf.pages)
     
     @abstractmethod
     def parse(self, text: str, **kwargs) -> DocumentIR:

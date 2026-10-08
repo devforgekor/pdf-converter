@@ -30,7 +30,7 @@ from authlib.integrations.starlette_client import OAuth
 import httpx
 
 from database import engine, get_db, Base
-from models import User, Conversion, LegalEducation, SafetyEducation, SchoolEducation, ExampleFile, CertificateTemplate, CertificateRecord
+from models import User, Conversion, LegalEducation, SafetyEducation, IntegrityEducation, ExampleFile, CertificateTemplate, CertificateRecord
 from flash import flash, get_flashed_messages
 from csrf import generate_csrf_token, validate_csrf_token
 from storage import storage
@@ -112,7 +112,7 @@ async def admin_page(request: Request, db: Session = Depends(get_db)):
         "completed_conversions": db.query(Conversion).filter(Conversion.status == "completed").count(),
         "total_legal": db.query(LegalEducation).count(),
         "total_safety": db.query(SafetyEducation).count(),
-        "total_school": db.query(SchoolEducation).count(),
+        "total_integrity": db.query(IntegrityEducation).count(),
     }
     
     # 최근 변환 이력
@@ -707,23 +707,23 @@ async def delete_safety_education(
     return RedirectResponse("/certificate/safety", status_code=303)
 
 
-# === 학전 교육 ===
-@app.get("/certificate/school", response_class=HTMLResponse)
-async def school_education_page(request: Request, db: Session = Depends(get_db)):
+# === 청렴교육 ===
+@app.get("/certificate/integrity", response_class=HTMLResponse)
+async def integrity_education_page(request: Request, db: Session = Depends(get_db)):
 
     current_year = datetime.now().year
-    educations = db.query(SchoolEducation).filter(
-        SchoolEducation.year == current_year
-    ).order_by(SchoolEducation.education_date.desc()).all()
+    educations = db.query(IntegrityEducation).filter(
+        IntegrityEducation.year == current_year
+    ).order_by(IntegrityEducation.education_date.desc()).all()
 
     yearly_hours = {}
     for year in range(current_year - 2, current_year + 1):
-        total = db.query(func.sum(SchoolEducation.hours)).filter(
-            SchoolEducation.year == year
+        total = db.query(func.sum(IntegrityEducation.hours)).filter(
+            IntegrityEducation.year == year
         ).scalar() or 0
         yearly_hours[year] = total
 
-    return templates.TemplateResponse("school_education.html", {
+    return templates.TemplateResponse("integrity_education.html", {
         "request": request,
         "educations": educations,
         "current_year": current_year,
@@ -731,8 +731,8 @@ async def school_education_page(request: Request, db: Session = Depends(get_db))
     })
 
 
-@app.post("/certificate/school/upload")
-async def upload_school_certificate(
+@app.post("/certificate/integrity/upload")
+async def upload_integrity_certificate(
     request: Request,
     file: UploadFile = File(...),
     edu_year: int = Form(...),
@@ -745,7 +745,7 @@ async def upload_school_certificate(
 
     if not file.filename.lower().endswith(".pdf"):
         flash(request, "PDF 파일만 업로드 가능합니다.", "danger")
-        return RedirectResponse("/certificate/school", status_code=303)
+        return RedirectResponse("/certificate/integrity", status_code=303)
 
     content = await file.read()
 
@@ -756,7 +756,7 @@ async def upload_school_certificate(
             f.write(content)
     except Exception as e:
         flash(request, f"파일 저장 중 오류가 발생했습니다: {str(e)}", "danger")
-        return RedirectResponse("/certificate/school", status_code=303)
+        return RedirectResponse("/certificate/integrity", status_code=303)
 
     try:
         validator.check_magic_number(temp_path)
@@ -765,14 +765,14 @@ async def upload_school_certificate(
         if os.path.exists(temp_path):
             os.remove(temp_path)
         flash(request, f"PDF 검증 실패: {str(e)}", "danger")
-        return RedirectResponse("/certificate/school", status_code=303)
+        return RedirectResponse("/certificate/integrity", status_code=303)
 
     # 암호화 검사
     if validator.is_encrypted(temp_path):
         if os.path.exists(temp_path):
             os.remove(temp_path)
         flash(request, "암호화된 PDF는 지원되지 않습니다.", "danger")
-        return RedirectResponse("/certificate/school", status_code=303)
+        return RedirectResponse("/certificate/integrity", status_code=303)
 
     if os.path.exists(temp_path):
         os.remove(temp_path)
@@ -785,7 +785,7 @@ async def upload_school_certificate(
         storage.upload_file(object_name, content, "application/pdf")
     except Exception as e:
         flash(request, f"파일 업로드 중 오류가 발생했습니다: {str(e)}", "danger")
-        return RedirectResponse("/certificate/school", status_code=303)
+        return RedirectResponse("/certificate/integrity", status_code=303)
 
     # Conversion 레코드 생성
     conversion = Conversion(
@@ -800,8 +800,8 @@ async def upload_school_certificate(
     db.commit()
     db.refresh(conversion)
 
-    # 학전 교육 레코드 생성
-    edu = SchoolEducation(
+    # 청렴교육 레코드 생성
+    edu = IntegrityEducation(
         user_id=1,
         year=edu_year,
         education_name=edu_name,
@@ -819,8 +819,8 @@ async def upload_school_certificate(
     return RedirectResponse(f"/convert/{conversion.id}", status_code=303)
 
 
-@app.post("/certificate/school/add")
-async def add_school_education(
+@app.post("/certificate/integrity/add")
+async def add_integrity_education(
     request: Request,
     year: int = Form(...),
     hours: float = Form(...),
@@ -833,7 +833,7 @@ async def add_school_education(
 ):
 
     user_id = 1
-    edu = SchoolEducation(
+    edu = IntegrityEducation(
         user_id=user_id,
         year=year,
         education_name=name,
@@ -847,22 +847,22 @@ async def add_school_education(
     db.commit()
 
     flash(request, f"{name} ({year}년) 교육이 추가되었습니다.", "success")
-    return RedirectResponse("/certificate/school", status_code=303)
+    return RedirectResponse("/certificate/integrity", status_code=303)
 
 
-@app.post("/certificate/school/delete/{edu_id}")
-async def delete_school_education(
+@app.post("/certificate/integrity/delete/{edu_id}")
+async def delete_integrity_education(
     request: Request,
     edu_id: int,
     db: Session = Depends(get_db),
 ):
 
-    edu = db.query(SchoolEducation).filter(SchoolEducation.id == edu_id).first()
+    edu = db.query(IntegrityEducation).filter(IntegrityEducation.id == edu_id).first()
     if edu:
         db.delete(edu)
         db.commit()
         flash(request, "교육 내역이 삭제되었습니다.", "success")
-    return RedirectResponse("/certificate/school", status_code=303)
+    return RedirectResponse("/certificate/integrity", status_code=303)
 
 
 @app.get("/upload", response_class=HTMLResponse)

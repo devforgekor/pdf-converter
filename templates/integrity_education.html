@@ -1,9 +1,9 @@
 {% extends "base.html" %}
 
-{% block title %}학전 - KUHWA Portal{% endblock %}
+{% block title %}청렴교육 - KUHWA Portal{% endblock %}
 
 {% block content %}
-<div class="school-container">
+<div class="integrity-container">
     <div class="section-header">
         <a href="/certificate" class="back-link">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -11,8 +11,8 @@
             </svg>
             이수증으로 돌아가기
         </a>
-        <h1>학전</h1>
-        <p class="section-subtitle">학교-wide 교육 이수 관리</p>
+        <h1>청렴교육</h1>
+        <p class="section-subtitle">반부패·윤리교육, 청탁금지법 교육 등</p>
     </div>
 
     <div class="year-summary">
@@ -67,7 +67,7 @@
                             {% if edu.conversion_id %}
                                 <a href="/download/{{ edu.conversion_id }}" class="btn btn-small btn-outline">다운로드</a>
                             {% endif %}
-                            <form action="/certificate/school/delete/{{ edu.id }}" method="post" style="display:inline;">
+                            <form action="/certificate/integrity/delete/{{ edu.id }}" method="post" style="display:inline;">
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token(request) }}">
                                 <button type="submit" class="btn btn-small btn-outline" onclick="return confirm('정말 삭제하시겠습니까?')">삭제</button>
                             </form>
@@ -87,9 +87,9 @@
         <div class="upload-section">
             <div class="upload-card">
                 <h3>수료증 업로드</h3>
-                <p>학전 수료증 PDF를 업로드하면 자동으로 정보를 추출합니다.</p>
+                <p>청렴교육 수료증 PDF를 업로드하면 자동으로 정보를 추출합니다.</p>
                 
-                <form id="school-upload-form" action="/certificate/school/upload" method="post" enctype="multipart/form-data">
+                <form id="integrity-upload-form" action="/certificate/integrity/upload" method="post" enctype="multipart/form-data">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token(request) }}">
                     
                     <div class="form-row">
@@ -110,7 +110,7 @@
                     
                     <div class="form-group">
                         <label for="edu_name">교육명</label>
-                        <input type="text" id="edu_name" name="edu_name" required placeholder="예: 학전교육 1차">
+                        <input type="text" id="edu_name" name="edu_name" required placeholder="예: 청렴교육 1차">
                     </div>
                     
                     <div class="form-row">
@@ -163,7 +163,7 @@
             <h3>교육 추가</h3>
             <button class="modal-close" onclick="closeModal()">&times;</button>
         </div>
-        <form action="/certificate/school/add" method="post">
+        <form action="/certificate/integrity/add" method="post">
             <input type="hidden" name="csrf_token" value="{{ csrf_token(request) }}">
             
             <div class="form-row">
@@ -184,7 +184,7 @@
             
             <div class="form-group">
                 <label for="add_name">교육명</label>
-                <input type="text" id="add_name" name="name" required placeholder="예: 학전교육">
+                <input type="text" id="add_name" name="name" required placeholder="예: 청렴교육">
             </div>
             
             <div class="form-row">
@@ -222,7 +222,7 @@
 </div>
 
 <style>
-.school-container {
+.integrity-container {
     max-width: 1000px;
     margin: 0 auto;
 }
@@ -561,7 +561,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     
     // 업로드 폼 처리
-    const uploadForm = document.getElementById('school-upload-form');
+    const uploadForm = document.getElementById('integrity-upload-form');
     const uploadZone = document.getElementById('upload-zone');
     const fileInput = document.getElementById('file-input');
     const fileInfo = document.getElementById('file-info');
@@ -578,7 +578,7 @@ document.addEventListener('DOMContentLoaded', function() {
             uploadBtn.disabled = true;
             uploadBtn.textContent = '업로드 중...';
             
-            fetch('/certificate/school/upload', {
+            fetch('/certificate/integrity/upload', {
                 method: 'POST',
                 body: formData
             }).then(response => {

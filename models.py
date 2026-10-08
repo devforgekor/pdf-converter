@@ -19,7 +19,7 @@ class User(Base):
     conversions = relationship("Conversion", back_populates="user")
     legal_educations = relationship("LegalEducation", back_populates="user")
     safety_educations = relationship("SafetyEducation", back_populates="user")
-    school_educations = relationship("SchoolEducation", back_populates="user")
+    integrity_educations = relationship("IntegrityEducation", back_populates="user")
 
 
 class Conversion(Base):
@@ -89,9 +89,9 @@ class SafetyEducation(Base):
     conversion = relationship("Conversion")
 
 
-class SchoolEducation(Base):
-    """학생 학적 정보 관리"""
-    __tablename__ = "school_educations"
+class IntegrityEducation(Base):
+    """청렴교육 이수 관리"""
+    __tablename__ = "integrity_educations"
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
@@ -108,7 +108,7 @@ class SchoolEducation(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
-    user = relationship("User", back_populates="school_educations")
+    user = relationship("User", back_populates="integrity_educations")
     conversion = relationship("Conversion")
 
 
