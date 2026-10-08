@@ -9,7 +9,6 @@ services:
       - ./uploads:/app/uploads
       - ./output:/app/output
       - ./instance:/app/instance
-      - /home/ubuntu/.oci:/home/ubuntu/.oci:ro
     env_file:
       - .env
     restart: unless-stopped
