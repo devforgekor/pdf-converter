@@ -26,6 +26,7 @@
     <footer class="footer">
         <p>&copy; 2024 PDF2Sheet. All rights reserved.</p>
         <p class="footer-actions">
+            <a href="/upload">PDF 변환</a>
             <a href="/examples">예시 파일</a>
             {% if request.session.get("user_id") %}
             <form action="/logout" method="post" class="nav-form">
