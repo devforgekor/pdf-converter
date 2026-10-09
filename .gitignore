@@ -9,6 +9,7 @@ __pycache__/
 .Python
 venv/
 env/
+.venv/
 
 # 업로드/출력
 uploads/
