@@ -102,12 +102,12 @@ body {
 }
 
 .btn-primary {
-    background: #1f883d;
+    background: var(--primary);
     color: white;
 }
 
 .btn-primary:hover {
-    background: #1a7f37;
+    background: var(--primary-hover);
 }
 
 .btn-outline {
