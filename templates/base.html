@@ -2,15 +2,22 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
-    <meta name="theme-color" content="#3b82f6">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <title>{% block title %}PDF to Spreadsheet{% endblock %}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#ffffff">
+    <title>{% block title %}PDF 변환 도구{% endblock %}</title>
     <link rel="stylesheet" href="/static/css/style.css">
     {% block extra_css %}{% endblock %}
 </head>
 <body>
+
+    {# href='/ 를 단일따옴표로 쓴 이유: nginx sub_filter 'href="/' 는 이중따옴표만
+       치환하므로, 포털 링크(/)가 /app/pdf/ 로 되살아나는 것을 막는다 #}
+    <header class="topbar">
+        <a class="logo" href='/'>kuhwa</a>
+        <span class="app">PDF 변환 도구</span>
+        <span class="spacer"></span>
+        <a class="gh" href="https://github.com/devforgekor/kuhwa" target="_blank" rel="noopener">source</a>
+    </header>
 
     <main class="container">
         {% set messages = get_flashed_messages(request) %}
@@ -24,16 +31,12 @@
     </main>
 
     <footer class="footer">
-        <p>&copy; 2024 PDF2Sheet. All rights reserved.</p>
-        <p class="footer-actions">
-            <a href="/upload">PDF 변환</a>
-            <a href="/examples">예시 파일</a>
-            {% if request.session.get("user_id") %}
-            <form action="/logout" method="post" class="nav-form">
-                <button type="submit" class="btn btn-outline btn-small">Google 연결 해제</button>
-            </form>
-            {% endif %}
-        </p>
+        <p>© kuhwa · PDF 변환 도구 · <a href='/'>서비스 목록</a></p>
+        {% if request.session.get("user_id") %}
+        <form action="/logout" method="post" class="nav-form footer-actions">
+            <button type="submit" class="btn btn-outline btn-small">Google 연결 해제</button>
+        </form>
+        {% endif %}
     </footer>
 
     {% block extra_js %}{% endblock %}
