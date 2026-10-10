@@ -29,7 +29,7 @@ router = APIRouter()
 
 
 # === 템플릿 관리 페이지 ===
-@router.get("/admin/templates", response_class=HTMLResponse)
+@router.api_route("/admin/templates", methods=["GET","HEAD"], response_class=HTMLResponse)
 async def admin_templates_page(request: Request, db: Session = Depends(get_db)):
 
     templates_list = db.query(CertificateTemplate).order_by(CertificateTemplate.created_at.desc()).all()
@@ -96,7 +96,7 @@ async def delete_template(
     return RedirectResponse("/admin/templates", status_code=303)
 
 
-@router.get("/admin/templates/{template_id}/edit", response_class=HTMLResponse)
+@router.api_route("/admin/templates/{template_id}/edit", methods=["GET","HEAD"], response_class=HTMLResponse)
 async def edit_template_page(
     request: Request,
     template_id: int,
@@ -194,7 +194,7 @@ async def learn_from_example(
     return RedirectResponse(f"/admin/templates/{template_id}/edit", status_code=303)
 
 
-@router.get("/admin/templates/{template_id}/learn-preview")
+@router.api_route("/admin/templates/{template_id}/learn-preview", methods=["GET","HEAD"])
 async def learn_preview(
     request: Request,
     template_id: int,
@@ -217,7 +217,7 @@ async def learn_preview(
 
 
 # === 이수증 자동 파싱 ===
-@router.get("/certificate/auto-parse", response_class=HTMLResponse)
+@router.api_route("/certificate/auto-parse", methods=["GET","HEAD"], response_class=HTMLResponse)
 async def auto_parse_page(request: Request, db: Session = Depends(get_db)):
 
     templates_list = db.query(CertificateTemplate).all()
@@ -392,7 +392,7 @@ async def auto_parse_certificate(
 
 
 # === 파싱 기록 관리 ===
-@router.get("/certificate/records", response_class=HTMLResponse)
+@router.api_route("/certificate/records", methods=["GET","HEAD"], response_class=HTMLResponse)
 async def certificate_records_page(request: Request, db: Session = Depends(get_db)):
 
     records = db.query(CertificateRecord).order_by(CertificateRecord.created_at.desc()).all()
@@ -404,7 +404,7 @@ async def certificate_records_page(request: Request, db: Session = Depends(get_d
     })
 
 
-@router.get("/certificate/records/{record_id}", response_class=HTMLResponse)
+@router.api_route("/certificate/records/{record_id}", methods=["GET","HEAD"], response_class=HTMLResponse)
 async def certificate_record_detail(
     request: Request,
     record_id: int,
@@ -539,7 +539,7 @@ async def export_certificate_records(
     )
 
 
-@router.get("/api/certificate/verify/{verification_code}")
+@router.api_route("/api/certificate/verify/{verification_code}", methods=["GET","HEAD"])
 async def verify_certificate(verification_code: str, db: Session = Depends(get_db)):
     record = db.query(CertificateRecord).filter(
         CertificateRecord.verification_code == verification_code

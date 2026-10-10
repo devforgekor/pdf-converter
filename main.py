@@ -102,7 +102,7 @@ async def logout(request: Request):
 
 
 # === 관리자 페이지 ===
-@app.get("/admin", response_class=HTMLResponse)
+@app.api_route("/admin", methods=["GET","HEAD"], response_class=HTMLResponse)
 async def admin_page(request: Request, db: Session = Depends(get_db)):
     
     # 통계 데이터
@@ -246,7 +246,7 @@ async def upload_example_file(
     return RedirectResponse("/admin", status_code=303)
 
 
-@app.get("/examples/download/{file_id}")
+@app.api_route("/examples/download/{file_id}", methods=["GET","HEAD"])
 async def download_example_file_public(
     request: Request,
     file_id: int,
@@ -269,7 +269,7 @@ async def download_example_file_public(
         return RedirectResponse("/examples", status_code=303)
 
 
-@app.get("/admin/example/download/{file_id}")
+@app.api_route("/admin/example/download/{file_id}", methods=["GET","HEAD"])
 async def download_example_file(
     request: Request,
     file_id: int,
@@ -319,7 +319,7 @@ async def delete_example_file(
     return RedirectResponse("/admin", status_code=303)
 
 
-@app.get("/examples", response_class=HTMLResponse)
+@app.api_route("/examples", methods=["GET","HEAD"], response_class=HTMLResponse)
 async def examples_page(request: Request, db: Session = Depends(get_db)):
 
     examples = db.query(ExampleFile).order_by(ExampleFile.created_at.desc()).all()
@@ -331,13 +331,13 @@ async def examples_page(request: Request, db: Session = Depends(get_db)):
 
 
 # === Google OAuth (Drive/Sheets 연동용 - 선택) ===
-@app.get("/auth/google")
+@app.api_route("/auth/google", methods=["GET","HEAD"])
 async def google_login(request: Request):
     redirect_uri = request.url_for('google_callback')
     return await oauth.google.authorize_redirect(request, redirect_uri)
 
 
-@app.get("/auth/google/callback")
+@app.api_route("/auth/google/callback", methods=["GET","HEAD"])
 async def google_callback(request: Request, db: Session = Depends(get_db)):
     token = await oauth.google.authorize_access_token(request)
     user_info = token.get('userinfo')
@@ -365,13 +365,13 @@ async def google_callback(request: Request, db: Session = Depends(get_db)):
 
 
 # === 앱 루트 — 이수증으로 안내 (구 대시보드/홈페이지는 삭제) ===
-@app.get("/", response_class=HTMLResponse)
+@app.api_route("/", methods=["GET","HEAD"], response_class=HTMLResponse)
 async def index(request: Request):
     return RedirectResponse("/certificate", status_code=303)
 
 
 # === 이수증 ===
-@app.get("/certificate", response_class=HTMLResponse)
+@app.api_route("/certificate", methods=["GET","HEAD"], response_class=HTMLResponse)
 async def certificate_page(request: Request, db: Session = Depends(get_db)):
 
     # 각 교육별 이수 현황 집계
@@ -401,7 +401,7 @@ async def certificate_page(request: Request, db: Session = Depends(get_db)):
     })
 
 
-@app.get("/certificate/legal", response_class=HTMLResponse)
+@app.api_route("/certificate/legal", methods=["GET","HEAD"], response_class=HTMLResponse)
 async def legal_education_page(request: Request, db: Session = Depends(get_db)):
 
     current_year = datetime.now().year
@@ -425,7 +425,7 @@ async def legal_education_page(request: Request, db: Session = Depends(get_db)):
     })
 
 
-@app.get("/certificate/safety", response_class=HTMLResponse)
+@app.api_route("/certificate/safety", methods=["GET","HEAD"], response_class=HTMLResponse)
 async def safety_education_page(request: Request, db: Session = Depends(get_db)):
 
     current_year = datetime.now().year
@@ -708,7 +708,7 @@ async def delete_safety_education(
 
 
 # === 청렴교육 ===
-@app.get("/certificate/integrity", response_class=HTMLResponse)
+@app.api_route("/certificate/integrity", methods=["GET","HEAD"], response_class=HTMLResponse)
 async def integrity_education_page(request: Request, db: Session = Depends(get_db)):
 
     current_year = datetime.now().year
@@ -865,7 +865,7 @@ async def delete_integrity_education(
     return RedirectResponse("/certificate/integrity", status_code=303)
 
 
-@app.get("/upload", response_class=HTMLResponse)
+@app.api_route("/upload", methods=["GET","HEAD"], response_class=HTMLResponse)
 async def upload_page(request: Request):
     return templates.TemplateResponse("upload.html", {"request": request})
 
@@ -1123,7 +1123,7 @@ async def upload_with_password(
 
 
 # === 변환 설정 ===
-@app.get("/convert/{conversion_id}", response_class=HTMLResponse)
+@app.api_route("/convert/{conversion_id}", methods=["GET","HEAD"], response_class=HTMLResponse)
 async def convert_page(request: Request, conversion_id: int, db: Session = Depends(get_db)):
     conversion = db.query(Conversion).filter(Conversion.id == conversion_id).first()
     if not conversion:
@@ -1214,7 +1214,7 @@ async def start_conversion(
 
 
 # === 다운로드 ===
-@app.get("/download/{conversion_id}", response_class=HTMLResponse)
+@app.api_route("/download/{conversion_id}", methods=["GET","HEAD"], response_class=HTMLResponse)
 async def download_page(request: Request, conversion_id: int, db: Session = Depends(get_db)):
     conversion = db.query(Conversion).filter(Conversion.id == conversion_id).first()
     if not conversion:
@@ -1226,7 +1226,7 @@ async def download_page(request: Request, conversion_id: int, db: Session = Depe
     })
 
 
-@app.get("/download/{conversion_id}/file")
+@app.api_route("/download/{conversion_id}/file", methods=["GET","HEAD"])
 async def download_file(request: Request, conversion_id: int, db: Session = Depends(get_db)):
     conversion = db.query(Conversion).filter(Conversion.id == conversion_id).first()
     if not conversion or conversion.status != "completed":
@@ -1246,7 +1246,7 @@ async def download_file(request: Request, conversion_id: int, db: Session = Depe
 
 
 # === API ===
-@app.get("/api/status/{conversion_id}")
+@app.api_route("/api/status/{conversion_id}", methods=["GET","HEAD"])
 async def get_status(request: Request, conversion_id: int, db: Session = Depends(get_db)):
     conversion = db.query(Conversion).filter(Conversion.id == conversion_id).first()
     if not conversion:
@@ -1284,7 +1284,7 @@ async def delete_file(request: Request, conversion_id: int, db: Session = Depend
 
 
 # === 배치 처리 ===
-@app.get("/batch", response_class=HTMLResponse)
+@app.api_route("/batch", methods=["GET","HEAD"], response_class=HTMLResponse)
 async def batch_page(request: Request, db: Session = Depends(get_db)):
     google_user = get_google_user(request, db)
     return templates.TemplateResponse("batch.html", {
@@ -1347,7 +1347,7 @@ async def batch_upload(
     return RedirectResponse("/batch/confirm", status_code=303)
 
 
-@app.get("/batch/confirm", response_class=HTMLResponse)
+@app.api_route("/batch/confirm", methods=["GET","HEAD"], response_class=HTMLResponse)
 async def batch_confirm_page(request: Request):
     
     batch_files = request.session.get("batch_files", [])
@@ -1486,7 +1486,7 @@ async def _process_batch_conversions(conversion_ids: List[int], output_format: s
         db.close()
 
 
-@app.get("/batch/status/{job_id}", response_class=HTMLResponse)
+@app.api_route("/batch/status/{job_id}", methods=["GET","HEAD"], response_class=HTMLResponse)
 async def batch_status_page(request: Request, job_id: str):
     
     job = batch_processor.get_job(job_id)
@@ -1500,7 +1500,7 @@ async def batch_status_page(request: Request, job_id: str):
     })
 
 
-@app.get("/api/batch/status/{job_id}")
+@app.api_route("/api/batch/status/{job_id}", methods=["GET","HEAD"])
 async def get_batch_status(request: Request, job_id: str):
     
     job = batch_processor.get_job(job_id)
@@ -1511,7 +1511,7 @@ async def get_batch_status(request: Request, job_id: str):
 
 
 # === Google Sheets 연동 ===
-@app.get("/sheets/sync/{conversion_id}")
+@app.api_route("/sheets/sync/{conversion_id}", methods=["GET","HEAD"])
 async def sync_to_sheets(
     request: Request,
     conversion_id: int,
@@ -1562,7 +1562,7 @@ async def sync_to_sheets(
         return RedirectResponse(f"/download/{conversion_id}", status_code=303)
 
 
-@app.get("/sheets/list")
+@app.api_route("/sheets/list", methods=["GET","HEAD"])
 async def list_sheets(request: Request, db: Session = Depends(get_db)):
     
     user = get_google_user(request, db)
@@ -1578,7 +1578,7 @@ async def list_sheets(request: Request, db: Session = Depends(get_db)):
 
 
 # === 속도 최적화 API ===
-@app.get("/api/cache/clear")
+@app.api_route("/api/cache/clear", methods=["GET","HEAD"])
 async def clear_cache(request: Request):
     
     parallel_processor.cache.clear()
