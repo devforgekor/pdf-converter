@@ -3,248 +3,31 @@
 {% block title %}이수증 - KUHWA Portal{% endblock %}
 
 {% block content %}
-<div class="certificate-container">
-    <div class="section-header">
-        <a href="https://kuhwa.duckdns.org/" class="back-link">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polyline points="15 18 9 12 15 6"></polyline>
-            </svg>
-            돌아가기
-        </a>
-        <h1>이수증</h1>
-        <p class="section-subtitle">법정의무교육, 안전교육, 청렴교육 관리</p>
-        <a href="/upload" class="btn btn-primary header-action">PDF 변환 시작</a>
-    </div>
-
-    <div class="certificate-grid">
-        <!-- 법정의무교육 -->
-        <div class="cert-card cert-legal">
-            <div class="cert-icon">
-                <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
-                </svg>
-            </div>
-            <h2>법정의무교육</h2>
-            <p>성희롱예방교육, 장애인인식개선교육, 개인정보보호교육 등</p>
-            
-            <div class="cert-stats">
-                <div class="stat-item">
-                    <span class="stat-label">이수 완료</span>
-                    <span class="stat-value">-</span>
-                </div>
-                <div class="stat-item">
-                    <span class="stat-label">미이수</span>
-                    <span class="stat-value">-</span>
-                </div>
-                <div class="stat-item">
-                    <span class="stat-label">이수율</span>
-                    <span class="stat-value">-</span>
-                </div>
-            </div>
-            
-            <div class="cert-actions">
-                <a href="/certificate/legal" class="btn btn-primary">상세 보기</a>
-                <a href="/certificate/legal#legal-upload-form" class="btn btn-outline">수료증 업로드</a>
-            </div>
-        </div>
-
-        <!-- 안전교육 -->
-        <div class="cert-card cert-safety">
-            <div class="cert-icon">
-                <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
-                    <line x1="12" y1="9" x2="12" y2="13"></line>
-                    <line x1="12" y1="17" x2="12.01" y2="17"></line>
-                </svg>
-            </div>
-            <h2>안전교육</h2>
-            <p>학교안전교육 (최근 3년 15시간 이수)</p>
-            
-            <div class="cert-stats">
-                <div class="stat-item">
-                    <span class="stat-label">총 이수시간</span>
-                    <span class="stat-value">-시간</span>
-                </div>
-                <div class="stat-item">
-                    <span class="stat-label">목표시간</span>
-                    <span class="stat-value">15시간</span>
-                </div>
-                <div class="stat-item">
-                    <span class="stat-label">충족 여부</span>
-                    <span class="stat-value">-</span>
-                </div>
-            </div>
-            
-            <div class="cert-actions">
-                <a href="/certificate/safety" class="btn btn-primary">상세 보기</a>
-                <a href="/certificate/safety#safety-upload-form" class="btn btn-outline">수료증 업로드</a>
-            </div>
-        </div>
-
-        <!-- 청렴교육 -->
-        <div class="cert-card cert-integrity">
-            <div class="cert-icon">
-                <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <circle cx="12" cy="8" r="7"></circle>
-                    <polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"></polyline>
-                </svg>
-            </div>
-            <h2>청렴교육</h2>
-            <p>반부패·윤리교육, 청탁금지법 교육 등</p>
-            
-            <div class="cert-stats">
-                <div class="stat-item">
-                    <span class="stat-label">총 이수시간</span>
-                    <span class="stat-value">-시간</span>
-                </div>
-                <div class="stat-item">
-                    <span class="stat-label">이수 건수</span>
-                    <span class="stat-value">-건</span>
-                </div>
-                <div class="stat-item">
-                    <span class="stat-label">최근 이수일</span>
-                    <span class="stat-value">-</span>
-                </div>
-            </div>
-            
-            <div class="cert-actions">
-                <a href="/certificate/integrity" class="btn btn-primary">상세 보기</a>
-                <a href="/certificate/integrity#integrity-upload-form" class="btn btn-outline">수료증 업로드</a>
-            </div>
-        </div>
-
-    </div>
+<div class="page-head">
+    <h1>이수증</h1>
+    <p class="lead">법정의무교육, 안전교육, 청렴교육 관리 — 항목을 선택하면 상세 페이지로 이동합니다</p>
 </div>
 
-<style>
-.certificate-container {
-    max-width: 1200px;
-    margin: 0 auto;
-}
-
-.section-header {
-    margin-bottom: 2rem;
-}
-
-.back-link {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    color: var(--gray-500);
-    text-decoration: none;
-    margin-bottom: 1rem;
-    font-size: 0.9375rem;
-}
-
-.back-link:hover {
-    color: var(--gray-700);
-}
-
-.section-header h1 {
-    font-size: 1.75rem;
-    margin-bottom: 0.5rem;
-}
-
-.section-subtitle {
-    color: var(--gray-500);
-}
-
-.header-action {
-    display: inline-flex;
-    align-items: center;
-    margin-top: 1.25rem;
-}
-
-.certificate-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-    gap: 1.5rem;
-}
-
-.cert-card {
-    background: white;
-    padding: 2rem;
-    border-radius: var(--radius);
-    box-shadow: var(--shadow);
-    }
-
-.cert-legal { border-left-color: #0969da; }
-.cert-safety { border-left-color: #9a6700; }
-.cert-integrity { border-left-color: #8b5cf6; }
-
-.cert-icon {
-    margin-bottom: 1rem;
-}
-
-.cert-legal .cert-icon { color: #0969da; }
-.cert-safety .cert-icon { color: #9a6700; }
-.cert-integrity .cert-icon { color: #8b5cf6; }
-
-.cert-card h2 {
-    font-size: 1.25rem;
-    margin-bottom: 0.5rem;
-}
-
-.cert-card > p {
-    color: var(--gray-500);
-    font-size: 0.9375rem;
-    margin-bottom: 1.5rem;
-}
-
-.cert-stats {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 1rem;
-    padding: 1rem;
-    background: var(--gray-50);
-    border-radius: var(--radius);
-    margin-bottom: 1.5rem;
-}
-
-.stat-item {
-    text-align: center;
-}
-
-.stat-label {
-    display: block;
-    font-size: 0.8125rem;
-    color: var(--gray-500);
-    margin-bottom: 0.25rem;
-}
-
-.stat-value {
-    display: block;
-    font-size: 1.25rem;
-    font-weight: 600;
-    color: var(--gray-900);
-}
-
-.cert-actions {
-    display: flex;
-    gap: 0.75rem;
-}
-
-.cert-actions .btn {
-    flex: 1;
-}
-
-@media (max-width: 768px) {
-    .certificate-grid {
-        grid-template-columns: 1fr;
-    }
-    
-    .cert-card {
-        padding: 1.5rem;
-    }
-    
-    .cert-stats {
-        grid-template-columns: 1fr;
-        gap: 0.75rem;
-    }
-    
-    .cert-actions {
-        flex-direction: column;
-    }
-}
-</style>
+<div class="list">
+    <a class="row" href="/certificate/legal">
+        <span class="row-label">법정의무교육</span>
+        <span class="row-type">이수증</span>
+        <span class="row-path">성희롱예방 · 장애인인식개선 · 개인정보보호</span>
+    </a>
+    <a class="row" href="/certificate/safety">
+        <span class="row-label">안전교육</span>
+        <span class="row-type">이수증</span>
+        <span class="row-path">학교안전교육 (최근 3년 15시간 이수)</span>
+    </a>
+    <a class="row" href="/certificate/integrity">
+        <span class="row-label">청렴교육</span>
+        <span class="row-type">이수증</span>
+        <span class="row-path">반부패·윤리교육 · 청탁금지법 교육</span>
+    </a>
+    <a class="row" href="/upload">
+        <span class="row-label">PDF 변환 시작</span>
+        <span class="row-type">.pdf</span>
+        <span class="row-path">파일을 업로드하여 엑셀 또는 구글 시트로 변환</span>
+    </a>
+</div>
 {% endblock %}
